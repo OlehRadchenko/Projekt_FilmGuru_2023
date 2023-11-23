@@ -1,0 +1,41 @@
+Projekt I – BAZA FILMÓW (30 pkt)
+
+Napisz aplikację, która będzie serwisem zbierającym bazę filmów. Aplikacja powinna korzystać z API serwisu https://www.themoviedb.org (dostęp do dokumentacji API pod adresem https://www.themoviedb.org/documentation/api)
+
+Pod ocenę będą brane następujące elementy:
+1.    (1 pkt) Skompilowanie oraz uruchomienie projektu
+2.    (17 pkt) Uwzględnienie wymagań z uwzględnieniem sytuacji wyjątkowych:
+    >    (1 pkt) Aplikacja na początkowej stronie powinna wyświetlić panel do wyszukania filmów
+    >    (1 pkt) Aplikacja na początkowej stronie powinna wyświetlić najbardziej popularne filmy w serwisie https://www.themoviedb.org
+    >    (1 pkt) Podczas wpisania do panelu nazwy filmów, powinno wyświetlić nazwy filmów pobranych z serwisu https://www.themoviedb.org
+    >    (5 pkt) Każdy z pobranych filmów przez wyszukiwania powinien zawierać:
+        o    (0.25 pkt) Tytuł filmu
+        o    (0.25 pkt) Zdjęcie/plakat filmu
+        o    (0.25 pkt) Opis filmu
+        o    (0.25 pkt) Data premiery
+        o    (0.25 pkt) Wymieniony gatunek filmów
+        o    (0.25 pkt) Wymienienie reżysera
+        o    (0.25 pkt) Wyświetlenie głównych aktorów
+        o    (0.25 pkt) Odnośnik do strony w serwisie https://www.themoviedb.org
+        o    (1 pkt) Średnia ocen z tego filmu (z ilością oddanych głosów)
+        o    (1 pkt) Możliwość obejrzenia galerii scen z tego filmu
+        o    (1 pkt) Możliwość obejrzenia zwiastunu tego filmu
+    >    (2 pkt) Aplikacja powinna zawierać panel w którym będziemy wyszukiwać filmy nie tylko po słowie kluczowym, ale również po gatunku
+    >    (2 pkt) Wyszukane filmy powinny być wyświetlane z możliwością sortowania pól na przykład po roku wydania filmu
+    >    (2 pkt) Aplikacja powinna pozwalać na wystawienie oceny danemu filmowi. Wówczas ocena ta powinna zostać przekazana do serwisu https://www.themoviedb.org
+    >    (1 pkt) Oprócz wyszukiwania filmów z serwisu https://www.themoviedb.org aplikacja powinna zawierać panel, w którym sam można dodać film o podanych wyżej parametrach (bez galerii oraz odnośniku do serwisu https://www.themoviedb.org
+    >    (2 pkt) Aplikacja powinna wyświetlać statystyki dla danych filmów (w postaci tabeli na przykład najbardziej popularne, najbardziej popularny aktor). Im więcej statystyk tym większa liczba punktów.
+3.    (7 pkt) Styl aplikacji 
+    >    (2 pkt) Użycie frameworka CSS np. Bootstrap lub czystego CSS
+    >    (1 pkt) Funkcjonalne ułożenie elementów aplikacji
+    >    (4 pkt) Responsywny design strony
+4.    (2 pkt) Walidacja formularzy
+5.    (3 pkt) Styl i podział kodu
+    >    (1 pkt) Użycie TypeScript
+    >    (1 pkt) Sensowny podział na pliki
+    >    (1 pkt) Zachowana metodyka DRY
+
+Ponadto pod ocenę jest brane również:
+    >    Historia projektu w repozytorium.
+    >    Ocena opisu commitów
+    >    Stan repozytorium (żeby nie był śmietnikiem!)
