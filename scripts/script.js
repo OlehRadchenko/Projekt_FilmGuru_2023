@@ -1,6 +1,6 @@
 const url = 'https://api.themoviedb.org/3';
 const api_key = 'api_key=c55b1cd24cb5bed30d81132775cd9903';
-let movie_id, maxPages, keyword;
+let movie_id, maxPages, keyword; //savedSelector;
 let id_backdrops = 0;
 let id_trailers = 0;
 let alreadySearched = 0;
@@ -16,7 +16,7 @@ const buttonClick = (word, page) => {
     biggerDiv.id = 'biggerDivId';
     appendToHtml('body', biggerDiv);
     keyword = word;
-    printAll(url + '/search/movie?query=' + keyword + '&' + api_key + '&page=' + page, printFilms);
+    uniqueFetch(url + '/search/movie?query=' + keyword + '&' + api_key + '&page=' + page, printFancyMovie);
 };
 
 const sortAlfa = () => {
@@ -41,7 +41,7 @@ const sortAlfa = () => {
     for (var i = 0, l = toSort.length; i < l; i++) {
         parent.appendChild(sorted[i]);
     }
-}
+};
 
 const sortYear = () => {
     var toSort = document.getElementById('biggerDivId').children;
@@ -65,9 +65,9 @@ const sortYear = () => {
     for (var i = 0, l = toSort.length; i < l; i++) {
         parent.appendChild(sorted[i]);
     }
-}
+};
 
-const printAll = (url, fn) => {
+const uniqueFetch = (url, fn) => {
     fetch(url)
         .then(checkStatus)
         .then(fn)
@@ -82,7 +82,7 @@ const checkStatus = (response) => {
     }
 };
 
-const printData = (json) => {
+const printMovie = (json) => {
     let bigDiv = document.createElement('div');
     let moreInfoDiv = document.createElement('div');
     let title = document.createElement('h1');
@@ -99,7 +99,7 @@ const printData = (json) => {
     moreInfoDiv.id = "more_" + movie_id;
     moreInfoDiv.style.display = "none";
     appendToHtml("div#biggerDivId", bigDiv);
-    appendToHtml("div#biggerDivId", moreInfoDiv);
+    
 
     title.textContent = 'Title: ' + json.title;
     appendToHtml("div#bigDivId" + movie_id, title);
@@ -116,6 +116,12 @@ const printData = (json) => {
     release_date.textContent = 'Release date: ' + json.release_date;
     appendToHtml("div#bigDivId" + movie_id, release_date);
     bigDiv.Year = json.release_date;
+    
+    showMoreInfo.innerHTML = "pokaż więcej info";
+    showMoreInfo.id = "showMoreInfoButton_" + movie_id;
+    setMoreInfoOnClick(showMoreInfo, movie_id);
+    appendToHtml("div#bigDivId" + movie_id, showMoreInfo);
+    appendToHtml("div#bigDivId" + movie_id, moreInfoDiv);
 
     overwiev.textContent = 'Overwiev: ' + json.overview;
     appendToHtml("div#more_" + movie_id, overwiev);
@@ -137,12 +143,6 @@ const printData = (json) => {
 
     vote_count.textContent = 'Count vote: ' + json.vote_count;
     appendToHtml("div#more_" + movie_id, vote_count);
-
-    showMoreInfo.innerHTML = "pokaż więcej info";
-    showMoreInfo.id = "showMoreInfoButton_" + movie_id;
-    setMoreInfoOnClick(showMoreInfo, movie_id);
-
-    appendToHtml("div#bigDivId" + movie_id, showMoreInfo);
 
     if (json.images.backdrops.length > 0) {
         let backdrops = document.createElement('div');
@@ -172,6 +172,13 @@ const printData = (json) => {
         id_trailers++;
     }
 
+    if(json.credits.cast.length > 0 || json.credits.crew.length > 0){
+        let actors = document.createElement('div');
+        actors.id = 'actors_' + movie_id;
+        appendToHtml("div#more_" + movie_id, actors);
+        //savedSelector = actors;
+        searchActorsDirectors(json);
+    }
     /*var rate = document.createElement('input');
     rate.id = 'rate' + movie_id;
     rate.setAttribute('type', 'number');
@@ -200,10 +207,44 @@ const printData = (json) => {
 };
 appendToHtml("div#bigDivId" + movie_id, rating);*/
     alreadySearched = 1;
-    printOnConsole(json);
+    //printOnConsole(json);
 };
 
-const printFilms = (json) => {
+const searchActorsDirectors = (json) => {
+    for(let i=0; i<json.credits.cast.length; i++){
+        if(json.credits.cast[i].known_for_department == "Acting" || json.credits.cast[i].known_for_department == "Directing"){
+            let actor_id = json.credits.cast[i].id; //https://api.themoviedb.org/3/person/{person_id}
+            uniqueFetch(url + '/person/' + actor_id + '?' + api_key, printActors);
+        }
+    }
+    /*for(let i=0; i<json.credits.crew.length; i++){
+        if(json.credits.crew[i].known_for_department == "Acting" || json.credits.crew[i].known_for_department == "Directing"){
+            let actor_id = json.credits.crew[i].id;
+            console.log(actor_id);
+            uniqueFetch(url + '/person/' + actor_id + '?' + api_key);
+        }
+    }*/
+}
+
+const printActors = (json) => {
+    console.log('actors_' + movie_id + '\n');
+    console.log(json);
+    if(json.profile_path != null){
+        let actorImage = document.createElement('img');
+        actorImage.src = 'https://image.tmdb.org/t/p/w500' + json.profile_path;
+        console.log(json.known_for_department);
+        if(json.known_for_department == "Acting"){
+            actorImage.alt = 'name: '+json.name+'\t\trole: Actor';
+        }else{
+            actorImage.alt = 'name: '+json.name+'\t\trole: Director';
+        }
+        actorImage.style.width = 50;
+        actorImage.style.height = 100;
+        appendToHtml('#' + 'actors_' + movie_id, actorImage);
+    }
+};
+
+const printFancyMovie = (json) => {
     /*o    (0.25 pkt) Tytuł filmu
         o    (0.25 pkt) Zdjęcie/plakat filmu
         o    (0.25 pkt) Opis filmu
@@ -235,7 +276,7 @@ const printFilms = (json) => {
     maxPages = json.total_pages;
     for (let i = 0; i < json.results.length; i++) {
         movie_id = json.results[i].id;
-        printAll(url + '/movie/' + movie_id + '?append_to_response=videos,images,credits&include_image_language=en,null&' + api_key, printData);
+        uniqueFetch(url + '/movie/' + movie_id + '?append_to_response=videos,images,credits&include_image_language=en,null&' + api_key, printMovie);
     }
     if (!navigationButtonsShows) {
         let previousPageButton = document.createElement('button');
@@ -260,10 +301,6 @@ const printError = error => {
 };
 
 const appendToHtml = (selector, element) => {
-    document.querySelector(selector).appendChild(element);
-};
-
-const createElements = (selector, element) => {
     document.querySelector(selector).appendChild(element);
 };
 
@@ -293,7 +330,7 @@ const setMoreInfoOnClick = (button, movieId) => {
             moreInfoButton.innerHTML = "schowaj więcej info";
         }
     }
-}
+};
 
 const printOnConsole = (json) => {
     console.log(json);
@@ -315,4 +352,4 @@ const printOnConsole = (json) => {
             );
         }
     }
-}
+};
