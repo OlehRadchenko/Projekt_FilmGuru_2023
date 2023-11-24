@@ -1,13 +1,13 @@
 const url = 'https://api.themoviedb.org/3';
 const api_key = 'api_key=c55b1cd24cb5bed30d81132775cd9903';
-let movie_id;
+let movie_id, maxPages, keyword;
 let id_backdrops = 0;
 let id_trailers = 0;
-let alreadySearched =0;
+let alreadySearched = 0;
+let actualPage = 1;
+let navigationButtonsShows = false;
 
-
-
-const buttonClick = form => {
+const buttonClick = (word, page) => {
     if(alreadySearched==1){
         let flush=document.getElementById('biggerDivId');
         flush.remove();
@@ -15,9 +15,8 @@ const buttonClick = form => {
         let biggerDiv = document.createElement('div');
         biggerDiv.id = 'biggerDivId';
         appendToHtml('body', biggerDiv);
-        movie_id=0;
-	let keyword = form.keyword.value;
-	printAll(url + '/search/movie?query=' + keyword + '&' + api_key, printFilms);
+	keyword = word;
+	printAll(url+'/search/movie?query='+keyword+'&'+api_key+'&page='+page, printFilms);
 };
 
 const sortAlfa = () =>{ 
@@ -43,6 +42,7 @@ for(var i = 0, l = toSort.length; i < l; i++) {
     parent.appendChild(sorted[i]);
 }
 }
+
 const sortYear = () =>{ 
     var toSort = document.getElementById('biggerDivId').children;
     toSort = Array.prototype.slice.call(toSort, 0);
@@ -68,10 +68,13 @@ for(var i = 0, l = toSort.length; i < l; i++) {
 }
 
 const printAll = (url, fn) => {
-	fetch(url).then(checkStatus).then(fn).catch(printError);
+	fetch(url)
+    .then(checkStatus)
+    .then(fn)
+    .catch(printError);
 };
 
-const checkStatus = response => {
+const checkStatus = (response) => {
 	if (response.status == 200) {
 		return response.json();
 	} else {
@@ -79,17 +82,16 @@ const checkStatus = response => {
 	}
 };
 
-const printData = json => {
+const printData = (json) => {
+    movie_id = json.id;
     let bigDiv = document.createElement('div');
         bigDiv.id = 'bigDivId'+movie_id;
-        movie_id++;
-        let biggerDiv=document.getElementById('biggerDivId');
-        biggerDiv.appendChild(bigDiv);
+        appendToHtml("div#biggerDivId", bigDiv);
    
 
 	let title = document.createElement('h1');
 	title.textContent = 'Title: ' + json.title;
-    bigDiv.appendChild(title);
+    appendToHtml("div#bigDivId"+movie_id, title);
     bigDiv.Title=json.title;
 
 	if (json.poster_path != null) {
@@ -97,20 +99,20 @@ const printData = json => {
 		poster.src = 'https://image.tmdb.org/t/p/w500' + json.poster_path;
 		poster.style.width = '100px';
 		poster.style.height = '100px';
-        bigDiv.appendChild(poster);
+        appendToHtml("div#bigDivId"+movie_id, poster);
 	}
 
 	let overwiev = document.createElement('h2');
 	overwiev.textContent = 'Overwiev: ' + json.overview;
-	bigDiv.appendChild(overwiev);
+	appendToHtml("div#bigDivId"+movie_id, overwiev);
 
 	let release_date = document.createElement('h2');
 	release_date.textContent = 'Release date: ' + json.release_date;
-	bigDiv.appendChild(release_date);
+	appendToHtml("div#bigDivId"+movie_id, release_date);
     bigDiv.Year=json.release_date;
 
 	let genre = document.createElement('h2');
-	bigDiv.appendChild(genre);
+	appendToHtml("div#bigDivId"+movie_id, genre);
 	if (json.genres.length > 0) {
 		for (let i = 0; i < json.genres.length; i++) {
 			genre.innerHTML += '- ' + json.genres[i].name + '<br>';
@@ -124,30 +126,29 @@ const printData = json => {
 	const titlee = titles.join('_');
 	themoviedb_link.href = 'https://www.themoviedb.org/movie/' + movie_id + '-' + titlee;
 	themoviedb_link.textContent = 'Open on themoviedb';
-	bigDiv.appendChild(themoviedb_link);
+	appendToHtml("div#bigDivId"+movie_id, themoviedb_link);
 
 	let vote_average = document.createElement('h3');
 	vote_average.textContent = 'Average vote: ' + json.vote_average;
-	bigDiv.appendChild(vote_average);
+	appendToHtml("div#bigDivId"+movie_id, vote_average);
 
 	let vote_count = document.createElement('h3');
 	vote_count.textContent = 'Count vote: ' + json.vote_count;
-	bigDiv.appendChild(vote_count);
+	appendToHtml("div#bigDivId"+movie_id, vote_count);
 
     let showBackdrops = document.createElement("BUTTON");
     showBackdrops.innerHTML = "pokaż zdjęcia";
-    let showBackdrops2=movie_id;
     showBackdrops.onclick = function(){
-    let backdropButton= document.getElementById('allBackdrops_' + showBackdrops2);
+    let backdropButton= document.getElementById('allBackdrops_' + movie_id);
     if(backdropButton.style.display=="block")
     {backdropButton.style.display = "none";} else{
     backdropButton.style.display = "block";}
    };
-   bigDiv.appendChild(showBackdrops);
+   appendToHtml("div#bigDivId"+movie_id, showBackdrops);
 
     let allBackdrops = document.createElement('div');
     allBackdrops.id = 'allBackdrops_' + movie_id;  
-    bigDiv.appendChild(allBackdrops);
+    appendToHtml("div#bigDivId"+movie_id, allBackdrops);
     
 
 	if (json.images.backdrops.length > 0) {
@@ -172,7 +173,7 @@ const printData = json => {
 	if (json.videos.results.length > 0) {
 		let trailers = document.createElement('div');
 		trailers.id = 'trailers_' + id_trailers;
-		bigDiv.appendChild(trailers);
+		appendToHtml("div#bigDivId"+movie_id, trailers);
 		for (let i = 0; i < json.videos.results.length; i++) {
 			let trailer = document.createElement('a');
 			trailer.textContent = ' Open: ' + json.videos.results[i].name;
@@ -186,7 +187,7 @@ const printData = json => {
     rate.id='rate'+movie_id;
     rate.setAttribute('type','number');
     let rate2=movie_id;
-    bigDiv.appendChild(rate);
+    appendToHtml("div#bigDivId"+movie_id, rate);
     let rating = document.createElement("BUTTON");
     rating.innerHTML = "oceń film";
     rating.onclick = function(){
@@ -208,41 +209,22 @@ const printData = json => {
             alert('ocena '+ratingButton.value+' wystawiona!')
         }
    };
-   bigDiv.appendChild(rating);
+   appendToHtml("div#bigDivId"+movie_id, rating);
 
 alreadySearched=1;
-	console.log(json);
+
+    console.log(json);
 
 	console.log(
-		'Title: ' +
-			json.title +
-			'\n' +
-			'Poster: href: https://image.tmdb.org/t/p/w500' +
-			json.poster_path +
-			'\n' +
-			'Overwiev: ' +
-			json.overview +
-			'\n' +
-			'Release date: ' +
-			json.release_date +
-			'\n' +
-			'Genre: ' +
-			json.genres +
-			'\n' +
-			'themoviedb link: https://www.themoviedb.org/movie/' +
-			movie_id +
-			'-' +
-			titlee +
-			'\n' +
-			'Vote avg: ' +
-			json.vote_average +
-			'\n' +
-			'Vote count: ' +
-			json.vote_count +
-			'\n' +
-			'Backdrops: ' +
-			json.images.backdrops +
-			'\n'
+        'Title: ' + json.title + '\n' +
+        'Poster: href: https://image.tmdb.org/t/p/w500' + json.poster_path + '\n' +
+        'Overwiev: ' + json.overview + '\n' +
+        'Release date: ' + json.release_date + '\n' +
+        'Genre: ' + json.genres + '\n' +
+        'themoviedb link: https://www.themoviedb.org/movie/' + movie_id + '-' + titlee + '\n' +
+        'Vote avg: ' + json.vote_average + '\n' +
+        'Vote count: ' + json.vote_count + '\n' +
+        'Backdrops: ' + json.images.backdrops + '\n'
 	);
 	if (json.videos.results.length > 0) {
 		for (let i = 0; i < json.videos.results.length; i++) {
@@ -253,7 +235,7 @@ alreadySearched=1;
 	}
 };
 
-const printFilms = json => {
+const printFilms = (json) => {
 	/*o    (0.25 pkt) Tytuł filmu
         o    (0.25 pkt) Zdjęcie/plakat filmu
         o    (0.25 pkt) Opis filmu
@@ -282,17 +264,27 @@ const printFilms = json => {
         jeżeli człowiek jest reżyserem/aktorem zapisujemy jego cast.id i robimy fetcha https://api.themoviedb.org/3/person/{person_id}?append_to_response=images
         pobieramy szerokość z images.profiles.width
         */
+    maxPages = json.total_pages;
 	for (let i = 0; i < json.results.length; i++) {
 		movie_id = json.results[i].id;
-		printAll(
-			url +
-				'/movie/' +
-				movie_id +
-				'?append_to_response=videos,images,credits&include_image_language=en,null&' +
-				api_key,
-			printData
-		);
+		printAll(url+'/movie/'+movie_id+'?append_to_response=videos,images,credits&include_image_language=en,null&'+api_key, printData);
 	}
+    if(!navigationButtonsShows){
+        let previousPageButton = document.createElement('button');
+        previousPageButton.onclick = printPreviousPage;
+        previousPageButton.textContent = "<=";
+        previousPageButton.style.width = "50px";
+        previousPageButton.style.height = "25px";
+        appendToHtml("div#navigationButtons", previousPageButton);
+    
+        let nextPageButton = document.createElement('button');
+        nextPageButton.onclick = printNextPage;
+        nextPageButton.textContent = "=>";
+        nextPageButton.style.width = "50px";
+        nextPageButton.style.height = "25px";
+        appendToHtml("div#navigationButtons", nextPageButton);
+        navigationButtonsShows = true;
+    }
 };
 
 const printError = error => {
@@ -302,3 +294,17 @@ const printError = error => {
 const appendToHtml = (selector, element) => {
 	document.querySelector(selector).appendChild(element);
 };
+
+const printNextPage = () =>{
+    if(actualPage<maxPages){
+        actualPage++;
+        buttonClick(keyword, actualPage);
+    }
+}
+
+const printPreviousPage = () =>{
+    if(actualPage>1){
+        actualPage--;
+        buttonClick(keyword, actualPage);
+    }
+}
