@@ -3,11 +3,69 @@ const api_key = 'api_key=c55b1cd24cb5bed30d81132775cd9903';
 let movie_id;
 let id_backdrops = 0;
 let id_trailers = 0;
+let alreadySearched =0;
+
+
 
 const buttonClick = form => {
+    if(alreadySearched==1){
+        let flush=document.getElementById('biggerDivId');
+        flush.remove();
+        alreadySearched=0;}
+        let biggerDiv = document.createElement('div');
+        biggerDiv.id = 'biggerDivId';
+        appendToHtml('body', biggerDiv);
+        movie_id=0;
 	let keyword = form.keyword.value;
 	printAll(url + '/search/movie?query=' + keyword + '&' + api_key, printFilms);
 };
+
+const sortAlfa = () =>{ 
+    var toSort = document.getElementById('biggerDivId').children;
+    toSort = Array.prototype.slice.call(toSort, 0);
+    let sorted= toSort.sort(function(a, b) {
+        
+        if (a.Title < b.Title) {
+            return -1;
+            
+          }
+          if (a.Title > b.Title) {
+            return 1;
+           
+          }
+          
+          return 0;
+    });
+    var parent = document.getElementById('biggerDivId');
+parent.innerHTML = "";
+
+for(var i = 0, l = toSort.length; i < l; i++) {
+    parent.appendChild(sorted[i]);
+}
+}
+const sortYear = () =>{ 
+    var toSort = document.getElementById('biggerDivId').children;
+    toSort = Array.prototype.slice.call(toSort, 0);
+    let sorted= toSort.sort(function(a, b) {
+        
+        if (a.Year < b.Year) {
+            return -1;
+            
+          }
+          if (a.Year > b.Year) {
+            return 1;
+           
+          }
+          
+          return 0;
+    });
+    var parent = document.getElementById('biggerDivId');
+parent.innerHTML = "";
+
+for(var i = 0, l = toSort.length; i < l; i++) {
+    parent.appendChild(sorted[i]);
+}
+}
 
 const printAll = (url, fn) => {
 	fetch(url).then(checkStatus).then(fn).catch(printError);
@@ -22,28 +80,37 @@ const checkStatus = response => {
 };
 
 const printData = json => {
+    let bigDiv = document.createElement('div');
+        bigDiv.id = 'bigDivId'+movie_id;
+        movie_id++;
+        let biggerDiv=document.getElementById('biggerDivId');
+        biggerDiv.appendChild(bigDiv);
+   
+
 	let title = document.createElement('h1');
 	title.textContent = 'Title: ' + json.title;
-	appendToHtml('body', title);
+    bigDiv.appendChild(title);
+    bigDiv.Title=json.title;
 
 	if (json.poster_path != null) {
 		let poster = document.createElement('img');
 		poster.src = 'https://image.tmdb.org/t/p/w500' + json.poster_path;
 		poster.style.width = '100px';
 		poster.style.height = '100px';
-		appendToHtml('body', poster);
+        bigDiv.appendChild(poster);
 	}
 
 	let overwiev = document.createElement('h2');
 	overwiev.textContent = 'Overwiev: ' + json.overview;
-	appendToHtml('body', overwiev);
+	bigDiv.appendChild(overwiev);
 
 	let release_date = document.createElement('h2');
 	release_date.textContent = 'Release date: ' + json.release_date;
-	appendToHtml('body', release_date);
+	bigDiv.appendChild(release_date);
+    bigDiv.Year=json.release_date;
 
 	let genre = document.createElement('h2');
-	appendToHtml('body', genre);
+	bigDiv.appendChild(genre);
 	if (json.genres.length > 0) {
 		for (let i = 0; i < json.genres.length; i++) {
 			genre.innerHTML += '- ' + json.genres[i].name + '<br>';
@@ -57,20 +124,38 @@ const printData = json => {
 	const titlee = titles.join('_');
 	themoviedb_link.href = 'https://www.themoviedb.org/movie/' + movie_id + '-' + titlee;
 	themoviedb_link.textContent = 'Open on themoviedb';
-	appendToHtml('body', themoviedb_link);
+	bigDiv.appendChild(themoviedb_link);
 
 	let vote_average = document.createElement('h3');
 	vote_average.textContent = 'Average vote: ' + json.vote_average;
-	appendToHtml('body', vote_average);
+	bigDiv.appendChild(vote_average);
 
 	let vote_count = document.createElement('h3');
 	vote_count.textContent = 'Count vote: ' + json.vote_count;
-	appendToHtml('body', vote_count);
+	bigDiv.appendChild(vote_count);
+
+    let showBackdrops = document.createElement("BUTTON");
+    showBackdrops.innerHTML = "pokaż zdjęcia";
+    let showBackdrops2=movie_id;
+    showBackdrops.onclick = function(){
+    let backdropButton= document.getElementById('allBackdrops_' + showBackdrops2);
+    if(backdropButton.style.display=="block")
+    {backdropButton.style.display = "none";} else{
+    backdropButton.style.display = "block";}
+   };
+   bigDiv.appendChild(showBackdrops);
+
+    let allBackdrops = document.createElement('div');
+    allBackdrops.id = 'allBackdrops_' + movie_id;  
+    bigDiv.appendChild(allBackdrops);
+    
 
 	if (json.images.backdrops.length > 0) {
+       
 		let backdrops = document.createElement('div');
+        
 		backdrops.id = 'backdrops_' + id_backdrops;
-		appendToHtml('body', backdrops);
+        allBackdrops.appendChild(backdrops);
 		for (let i = 0; i < json.images.backdrops.length; i++) {
 			let backdrop = document.createElement('img');
 			backdrop.src = 'https://image.tmdb.org/t/p/w500' + json.images.backdrops[i].file_path;
@@ -79,22 +164,53 @@ const printData = json => {
 			backdrop.style.height = 200;
 			appendToHtml('#backdrops_' + id_backdrops, backdrop);
 		}
+        
 		id_backdrops++;
 	}
+    allBackdrops.style.display = "none";
 
 	if (json.videos.results.length > 0) {
 		let trailers = document.createElement('div');
 		trailers.id = 'trailers_' + id_trailers;
-		appendToHtml('body', trailers);
+		bigDiv.appendChild(trailers);
 		for (let i = 0; i < json.videos.results.length; i++) {
 			let trailer = document.createElement('a');
-			trailer.textContent = 'Open: ' + json.videos.results[i].name;
+			trailer.textContent = ' Open: ' + json.videos.results[i].name;
 			trailer.href = 'https://www.youtube.com/watch?v=' + json.videos.results[i].key;
 			appendToHtml('#trailers_' + id_trailers, trailer);
 		}
 		id_trailers++;
 	}
 
+    var rate = document.createElement('input');
+    rate.id='rate'+movie_id;
+    rate.setAttribute('type','number');
+    let rate2=movie_id;
+    bigDiv.appendChild(rate);
+    let rating = document.createElement("BUTTON");
+    rating.innerHTML = "oceń film";
+    rating.onclick = function(){
+    let ratingButton= document.getElementById('rate' + rate2);
+    if(ratingButton.value>10||ratingButton.value<0){
+        alert('ocena musi byc miedzy 0 a 10')
+    }
+    else{
+     /* WYSYLANIE OCENY DO DOKONCZENIA!   const options = {
+            method: 'POST',
+            headers: {accept: 'application/json', 'Content-Type': 'application/json;charset=utf-8'},
+            body: '{"value":'+ratingButton.value+'}'
+            };
+          
+          fetch('https://api.themoviedb.org/3/movie/'+movie_id+'/'+ratingButton.value, options)
+            .then(response => response.json())
+            .then(response => console.log(response))
+            .catch(err => console.error(err)); */
+            alert('ocena '+ratingButton.value+' wystawiona!')
+        }
+   };
+   bigDiv.appendChild(rating);
+
+alreadySearched=1;
 	console.log(json);
 
 	console.log(
