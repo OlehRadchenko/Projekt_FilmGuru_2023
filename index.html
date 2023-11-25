@@ -14,10 +14,36 @@
 </head>
 
 <body>
-    <form>
-        <input type="text" name="keyword">
-        <input type="button" value="Wyświetl filmy" onclick="buttonClick(this.form)">
-    </form>
+    <header>
+        <nav>
+            <div>
+                <h1 class="title">film guru</h1>
+            </div>
+            <div class="second">
+                <form>
+                    <div class="field">
+                        <div class="input__Field">
+                            <input type="text" name="keyword" class="input" placeholder="Wpisz coś">
+                        </div>
+                        <div class="hr"></div>
+                        <div class="genre">
+                            <div class="dropdown">
+                                <input class="val" type="text" placeholder="Select" readonly>
+                                <div class="options">
+                                    <div onclick="show('Title')">Title</div>
+                                    <div onclick="show('Genre')">Genre</div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="search" onclick="buttonClick(this.form)">
+                            <i class="fa-solid fa-magnifying-glass" style="color:#fff; "></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            </div>
+        </nav>
+    </header>
 </body>
 
 </html>
