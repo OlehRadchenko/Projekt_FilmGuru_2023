@@ -6,6 +6,7 @@ let id_trailers = 0;
 let alreadySearched = 0;
 let actualPage = 1;
 let navigationButtonsShows = false;
+let shownActors, shownDirectors;
 
 const buttonClick = (word, page) => {
     if (alreadySearched == 1) {
@@ -117,7 +118,7 @@ const printMovie = (json) => {
     appendToHtml("div#bigDivId" + movie_id, release_date);
     bigDiv.Year = json.release_date;
     
-    showMoreInfo.innerHTML = "pokaż więcej info";
+    showMoreInfo.innerHTML = "Show more info";
     showMoreInfo.id = "showMoreInfoButton_" + movie_id;
     setMoreInfoOnClick(showMoreInfo, movie_id);
     appendToHtml("div#bigDivId" + movie_id, showMoreInfo);
@@ -152,8 +153,8 @@ const printMovie = (json) => {
             let backdrop = document.createElement('img');
             backdrop.src = 'https://image.tmdb.org/t/p/w500' + json.images.backdrops[i].file_path;
             backdrop.alt = 'Backdrop ' + i;
-            backdrop.style.width = 200;
-            backdrop.style.height = 200;
+            backdrop.width = 200;
+            backdrop.height = 200;
             appendToHtml('#backdrops_' + id_backdrops, backdrop);
         }
         id_backdrops++;
@@ -172,7 +173,9 @@ const printMovie = (json) => {
         id_trailers++;
     }
 
-    if(json.credits.cast.length > 0 || json.credits.crew.length > 0){
+
+
+    if(json.credits.cast.length > 0){
         let actors = document.createElement('div');
         actors.id = 'actors_' + movie_id;
         appendToHtml("div#more_" + movie_id, actors);
@@ -211,38 +214,50 @@ appendToHtml("div#bigDivId" + movie_id, rating);*/
 };
 
 const searchActorsDirectors = (json) => {
+    shownActors = 0;
+    shownDirectors = 0;
     for(let i=0; i<json.credits.cast.length; i++){
-        if(json.credits.cast[i].known_for_department == "Acting" || json.credits.cast[i].known_for_department == "Directing"){
-            let actor_id = json.credits.cast[i].id; //https://api.themoviedb.org/3/person/{person_id}
-            uniqueFetch(url + '/person/' + actor_id + '?' + api_key, printActors);
+        if(json.credits.cast[i].known_for_department == "Directing" &&  shownDirectors < 5){
+            console.log("Directors: "+shownDirectors+" Actors: "+shownActors+" Movie id: "+movie_id);
+            printActors(json.credits.cast[i]);
+            shownDirectors++;
+        }
+        if(json.credits.cast[i].known_for_department == "Acting" && shownActors < 5){
+            console.log("Directors: "+shownDirectors+" Actors: "+shownActors+" Movie id: "+movie_id);
+            printActors(json.credits.cast[i]);
+            shownActors++;
         }
     }
-    /*for(let i=0; i<json.credits.crew.length; i++){
-        if(json.credits.crew[i].known_for_department == "Acting" || json.credits.crew[i].known_for_department == "Directing"){
-            let actor_id = json.credits.crew[i].id;
-            console.log(actor_id);
-            uniqueFetch(url + '/person/' + actor_id + '?' + api_key);
+    for(let i=0; i<json.credits.crew.length; i++){
+        if(json.credits.crew[i].known_for_department == "Directing" &&  shownDirectors < 5){
+            console.log("Directors: "+shownDirectors+" Actors: "+shownActors+" Movie id: "+movie_id);
+            printActors(json.credits.crew[i]);
+            shownDirectors++;
         }
-    }*/
+        if(json.credits.crew[i].known_for_department == "Acting" && shownActors < 5){
+            console.log("Directors: "+shownDirectors+" Actors: "+shownActors+" Movie id: "+movie_id);
+            printActors(json.credits.crew[i]);
+            shownActors++;
+        }
+    }
 }
 
-const printActors = (json) => {
-    console.log('actors_' + movie_id + '\n');
-    console.log(json);
-    if(json.profile_path != null){
-        let actorImage = document.createElement('img');
-        actorImage.src = 'https://image.tmdb.org/t/p/w500' + json.profile_path;
-        console.log(json.known_for_department);
-        if(json.known_for_department == "Acting"){
-            actorImage.alt = 'name: '+json.name+'\t\trole: Actor';
-        }else{
-            actorImage.alt = 'name: '+json.name+'\t\trole: Director';
-        }
-        actorImage.style.width = 50;
-        actorImage.style.height = 100;
-        appendToHtml('#' + 'actors_' + movie_id, actorImage);
+const printActors = (json_actor) =>{
+    let actorImage = document.createElement('img');
+    actorImage.width = 50;
+    actorImage.height = 100;
+    if (json_actor.known_for_department == "Acting") {
+        actorImage.alt = 'name: ' + json_actor.name + '\trole: Actor';
+    } else {
+        actorImage.alt = 'name: ' + json_actor.name + '\trole: Director';
     }
-};
+    if(json_actor.profile_path != null){
+        actorImage.src = 'https://image.tmdb.org/t/p/w500' + json_actor.profile_path; 
+    }else{
+        actorImage.src = 'src/images/unknown.png'; 
+    }
+    appendToHtml('#' + 'actors_' + movie_id, actorImage)
+}
 
 const printFancyMovie = (json) => {
     /*o    (0.25 pkt) Tytuł filmu
@@ -296,7 +311,7 @@ const printFancyMovie = (json) => {
     }
 };
 
-const printError = error => {
+const printError = (error) => {
     console.error('Wystąpił błąd:', error);
 };
 
@@ -324,10 +339,10 @@ const setMoreInfoOnClick = (button, movieId) => {
         let moreInfoButton = document.getElementById("showMoreInfoButton_" + movieId);
         if (moreDiv.style.display == "block") {
             moreDiv.style.display = "none";
-            moreInfoButton.innerHTML = "pokaż więcej info";
+            moreInfoButton.innerHTML = "Show more info";
         } else {
             moreDiv.style.display = "block";
-            moreInfoButton.innerHTML = "schowaj więcej info";
+            moreInfoButton.innerHTML = "Hide more info";
         }
     }
 };
