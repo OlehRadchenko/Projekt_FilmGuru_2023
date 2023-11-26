@@ -493,9 +493,23 @@ const addMovie = () => {
         let newTitle = document.getElementById('title').value;
         let newRok_w = document.getElementById('rok_w').value;
         let newOverview = document.getElementById('overview').value;
+        if(document.getElementById('title').value.replace(/ /g, '') == ""){
+            newTitle = 'unknown';
+        }
+        if(document.getElementById('rok_w').value.replace(/ /g, '') == ""){
+            newRok_w = 'unknown';
+        }
+        if(document.getElementById('overview').value.replace(/ /g, '') == ""){
+            newOverview = 'unknown';
+        }
         let newGenres = new Array();
+        let minus = 0;
         for (i = 0; i <= genreCount; i++) {
-            newGenres[i] = document.getElementById('genre' + i).value;
+            if(document.getElementById('genre' + i).value.replace(/ /g, '') != ""){
+                newGenres[i-minus] = document.getElementById('genre' + i).value;
+            }else{
+                minus++;
+            }
         }
 
         const newMovie = {
