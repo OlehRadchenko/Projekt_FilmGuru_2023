@@ -9,9 +9,12 @@
 <body>
     <form>
         <input type="text" name="keyword" value="batman">
+        <input type="text" name="genre" value="Action">
         <input type="button" value="Wyświetl filmy" onclick="buttonClick(keyword.value, 1)">
         <input type="button" value="sortuj alfabetycznie" onclick="sortAlfa()">
         <input type="button" value="sortuj po roku" onclick="sortYear()">
+        <input type="button" value="sortuj po ratingu" onclick="sortRating()">
+        <input type="button" value="Filtr genre" onclick="buttonGenre(genre.value)">
     </form>
     <div id="navigationButtons"></div>
 </body>

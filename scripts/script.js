@@ -6,6 +6,7 @@ let id_trailers = 0;
 let alreadySearched = 0;
 let actualPage = 1;
 let navigationButtonsShows = false;
+let genre;
 
 const buttonClick = (word, page) => {
     if (alreadySearched == 1) {
@@ -36,19 +37,7 @@ const buttonClick = (word, page) => {
 const sortAlfa = () => {
     var toSort = document.getElementById('biggerDivId').children;
     toSort = Array.prototype.slice.call(toSort, 0);
-    let sorted = toSort.sort(function (a, b) {
-
-        if (a.Title < b.Title) {
-            return -1;
-
-        }
-        if (a.Title > b.Title) {
-            return 1;
-
-        }
-
-        return 0;
-    });
+    let sorted = toSort.sort((a, b) => a.Title.localeCompare(b.Title));
     var parent = document.getElementById('biggerDivId');
     parent.innerHTML = "";
 
@@ -60,19 +49,7 @@ const sortAlfa = () => {
 const sortYear = () => {
     var toSort = document.getElementById('biggerDivId').children;
     toSort = Array.prototype.slice.call(toSort, 0);
-    let sorted = toSort.sort(function (a, b) {
-
-        if (a.Year < b.Year) {
-            return -1;
-
-        }
-        if (a.Year > b.Year) {
-            return 1;
-
-        }
-
-        return 0;
-    });
+    let sorted = toSort.sort((a, b) => new Date(a.Year) - new Date(b.Year));
     var parent = document.getElementById('biggerDivId');
     parent.innerHTML = "";
 
@@ -80,6 +57,44 @@ const sortYear = () => {
         parent.appendChild(sorted[i]);
     }
 };
+
+const sortRating = () => {
+    var toSort = document.getElementById('biggerDivId').children;
+    toSort = Array.prototype.slice.call(toSort, 0);
+    let sorted = toSort.sort((a, b) => b.Rating - a.Rating);
+    var parent = document.getElementById('biggerDivId');
+    parent.innerHTML = "";
+
+    for (var i = 0, l = toSort.length; i < l; i++) {
+        parent.appendChild(sorted[i]);
+    }
+};
+
+const buttonGenre = (genr) =>{
+    setGenre(genr);
+    if (alreadySearched == 1) {
+        document.getElementById('biggerDivId').remove();
+        document.getElementById('ranking').remove();
+        alreadySearched = 0;
+    }
+    let biggerDiv = document.createElement('div');
+    let rankingDiv = document.createElement('div');
+    biggerDiv.id = 'biggerDivId';
+    rankingDiv.id = 'ranking';
+    appendToHtml('body', biggerDiv);
+    appendToHtml('body', rankingDiv);
+    uniqueFetch(url + '/search/movie?query=' + keyword + '&' + api_key + '&page=' + actualPage, filtrGenre);
+
+}
+
+const filtrGenre = (json) =>{
+    const filteredMovies = json.results.filter(movie => {
+        return movie.genre_ids.some(g => g == genre);
+    });
+    json.results = filteredMovies;
+    console.log(json);
+    printFancyMovie(json);
+}
 
 const uniqueFetch = (url, fn) => {
     fetch(url)
@@ -107,8 +122,8 @@ const printMovie = (json) => {
     let vote_average = document.createElement('h3');
     let vote_count = document.createElement('h3');
     let showMoreInfo = document.createElement('button');
-    movie_id = json.id;
 
+    movie_id = json.id;
     bigDiv.id = 'bigDivId' + movie_id;
     moreInfoDiv.id = "more_" + movie_id;
     moreInfoDiv.style.display = "none";
@@ -156,6 +171,7 @@ const printMovie = (json) => {
 
     vote_average.textContent = 'Average vote: ' + json.vote_average;
     appendToHtml("div#more_" + movie_id, vote_average);
+    bigDiv.Rating = json.vote_average;
 
     vote_count.textContent = 'Count vote: ' + json.vote_count;
     appendToHtml("div#more_" + movie_id, vote_count);
@@ -292,28 +308,29 @@ const printRanking = (nomination) =>{
 
 const printRankingMovieTopRated = (json) =>{
     for(let i = 1; i <= 5; i++){
-        makeRow("rankingRating"+i, i, json.results[i-1].title, json.results[i-1].vote_average + "("+json.results[i-1].vote_count+" votes)", "rankingRating");
+        makeRow("rankingRating"+i, i, json.results[i-1].title, json.results[i-1].vote_average + "("+json.results[i-1].vote_count+" votes)", "rankingRating", 'td', 'https://www.themoviedb.org/movie/' + json.results[i-1].id);
     }
 }
 
 const printRankingMoviePopular = (json) =>{
     for(let i = 1; i <= 5; i++){
-        makeRow("rankingMoviePopularity"+i, i, json.results[i-1].title, json.results[i-1].popularity, "rankingMoviePopularity");
+        makeRow("rankingMoviePopularity"+i, i, json.results[i-1].title, json.results[i-1].popularity, "rankingMoviePopularity", 'td', 'https://www.themoviedb.org/movie/' + json.results[i-1].id);
     }
 }
 
 const printRankingActorPopular = (json) =>{
     for(let i = 1; i <= 5; i++){
-        makeRow("rankingActorPopularity"+i, i, json.results[i-1].name, json.results[i-1].popularity, "rankingActorPopularity");
+        makeRow("rankingActorPopularity"+i, i, json.results[i-1].name, json.results[i-1].popularity, "rankingActorPopularity", 'td', 'https://www.themoviedb.org/person/' + json.results[i-1].id);
     }
 }
 
-const makeRow = (trId, td1Content, td2Content, td3Content, tableId) =>{
+const makeRow = (trId, td1Content, td2Content, td3Content, tableId, elements, link) =>{
     let tr = document.createElement('tr');
-    let td1 = document.createElement('td');
-    let td2 = document.createElement('td');
-    let td3 = document.createElement('td');
+    let td1 = document.createElement(elements);
+    let td2 = document.createElement(elements);
+    let td3 = document.createElement(elements);
     tr.id = trId;
+    td2.id = trId;
     td1.textContent = td1Content;
     td2.textContent = td2Content;
     td3.textContent = td3Content;
@@ -321,27 +338,26 @@ const makeRow = (trId, td1Content, td2Content, td3Content, tableId) =>{
     appendToHtml('tr#'+trId, td1);
     appendToHtml('tr#'+trId, td2);
     appendToHtml('tr#'+trId, td3);
+    if(link != null){
+        td2.innerHTML = "";
+        let themoviedbLink = document.createElement('a');
+        themoviedbLink.textContent = td2Content;
+        themoviedbLink.href = link;
+        themoviedbLink.target = '_blank';
+        appendToHtml('td#'+trId, themoviedbLink)
+    }
 }
 
 const makeTable = (nomination) =>{
     let table = document.createElement('table');
-    let tr = document.createElement('tr');
-    let th1 = document.createElement('th');
-    let th2 = document.createElement('th');
-    let th3 = document.createElement('th');
-    th1.textContent = "Place";
-    th2.textContent = "Movie";
-    if(nomination == "Actor Popularity")
-        th2.textContent = "Actor";
-    th3.textContent = nomination;
-    nomination = nomination.replace(/ /g, '');
-    table.id = "ranking"+nomination;
-    tr.id = "ranking"+nomination;
+    let nominationWithoutSpaces = nomination.replace(/ /g, '');
+    table.id = "ranking"+nominationWithoutSpaces;
     appendToHtml('div#ranking', table);
-    appendToHtml('table#'+table.id, tr);
-    appendToHtml('tr#'+tr.id, th1);
-    appendToHtml('tr#'+tr.id, th2);
-    appendToHtml('tr#'+tr.id, th3);
+    if(nomination == "Actor Popularity"){
+        makeRow("ranking"+nominationWithoutSpaces, "Place", "Movie", nomination, table.id, 'th', null);
+    }else{
+        makeRow("ranking"+nominationWithoutSpaces, "Place", "Actor", nomination, table.id, 'th', null);
+    }
 }
 
 const printFancyMovie = (json) => {
@@ -453,3 +469,67 @@ const printOnConsole = (json) => {
         }
     }
 };
+
+const setGenre = (g) =>{
+    switch(g){
+        case "Action":
+            genre = 28;
+            break;
+        case "Adventure":
+            genre = 12;
+            break;
+        case "Animation":
+            genre = 16;
+            break;
+        case "Comedy":
+            genre = 35;
+            break;
+        case "Crime":
+            genre = 80;
+            break;
+        case "Documentary":
+            genre = 99;
+            break;
+        case "Drama":
+            genre = 18;
+            break;
+        case "Family":
+            genre = 10751;
+            break;
+        case "Fantasy":
+            genre = 14;
+            break;
+        case "History":
+            genre = 36;
+            break;
+        case "Horror":
+            genre = 27;
+            break;
+        case "Music":
+            genre = 10402;
+            break;
+        case "Mystery":
+            genre = 9648;
+            break;
+        case "Romance":
+            genre = 10749;
+            break;
+        case "Science Fiction":
+            genre = 878;
+            break;
+        case "TV Movie":
+            genre = 10770;
+            break;
+        case "Thriller":
+            genre = 53;
+            break;
+        case "War":
+            genre = 10752;
+            break;
+        case "Western":
+            genre = 37;
+            break;
+        default:
+            genre = 0;
+    }
+}
