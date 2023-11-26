@@ -1,23 +1,36 @@
 const url = 'https://api.themoviedb.org/3';
 const api_key = 'api_key=c55b1cd24cb5bed30d81132775cd9903';
-let movie_id, maxPages, keyword; //savedSelector;
+let movie_id, maxPages, keyword, shownActors, shownDirectors; //savedSelector;
 let id_backdrops = 0;
 let id_trailers = 0;
 let alreadySearched = 0;
 let actualPage = 1;
 let navigationButtonsShows = false;
-let shownActors, shownDirectors;
 
 const buttonClick = (word, page) => {
     if (alreadySearched == 1) {
         document.getElementById('biggerDivId').remove();
+        document.getElementById('ranking').remove();
         alreadySearched = 0;
     }
     let biggerDiv = document.createElement('div');
+    let rankingDiv = document.createElement('div');
     biggerDiv.id = 'biggerDivId';
+    rankingDiv.id = 'ranking';
     appendToHtml('body', biggerDiv);
+    appendToHtml('body', rankingDiv);
     keyword = word;
     uniqueFetch(url + '/search/movie?query=' + keyword + '&' + api_key + '&page=' + page, printFancyMovie);
+    printRanking("Rating");
+    printRanking("Movie Popularity");
+    printRanking("Actor Popularity");
+    /*makeTable("Rating");
+    uniqueFetch(url+"/movie/top_rated?"+api_key, printRankingMovieTopRated);
+    makeTable("Movie Popularity");
+    uniqueFetch(url+"/movie/popular?"+api_key, printRankingMoviePopular);
+    makeTable("Actor Popularity");
+    uniqueFetch(url+"/person/popular?"+api_key, printRankingActorPopular);
+    */
 };
 
 const sortAlfa = () => {
@@ -106,13 +119,15 @@ const printMovie = (json) => {
     appendToHtml("div#bigDivId" + movie_id, title);
     bigDiv.Title = json.title;
 
+    let poster = document.createElement('img');
+    poster.style.width = '100px';
+    poster.style.height = '100px';
     if (json.poster_path != null) {
-        let poster = document.createElement('img');
         poster.src = 'https://image.tmdb.org/t/p/w500' + json.poster_path;
-        poster.style.width = '100px';
-        poster.style.height = '100px';
-        appendToHtml("div#bigDivId" + movie_id, poster);
+    }else{
+        poster.src = 'src/images/unknown_movie.png';
     }
+    appendToHtml("div#bigDivId" + movie_id, poster);
 
     release_date.textContent = 'Release date: ' + json.release_date;
     appendToHtml("div#bigDivId" + movie_id, release_date);
@@ -173,15 +188,13 @@ const printMovie = (json) => {
         id_trailers++;
     }
 
-
-
-    if(json.credits.cast.length > 0){
+    if(json.credits.cast.length > 0 || json.credits.crew.length > 0){
         let actors = document.createElement('div');
         actors.id = 'actors_' + movie_id;
         appendToHtml("div#more_" + movie_id, actors);
-        //savedSelector = actors;
         searchActorsDirectors(json);
     }
+
     /*var rate = document.createElement('input');
     rate.id = 'rate' + movie_id;
     rate.setAttribute('type', 'number');
@@ -218,24 +231,24 @@ const searchActorsDirectors = (json) => {
     shownDirectors = 0;
     for(let i=0; i<json.credits.cast.length; i++){
         if(json.credits.cast[i].known_for_department == "Directing" &&  shownDirectors < 5){
-            console.log("Directors: "+shownDirectors+" Actors: "+shownActors+" Movie id: "+movie_id);
+            //console.log("Directors: "+shownDirectors+" Actors: "+shownActors+" Movie id: "+movie_id);
             printActors(json.credits.cast[i]);
             shownDirectors++;
         }
         if(json.credits.cast[i].known_for_department == "Acting" && shownActors < 5){
-            console.log("Directors: "+shownDirectors+" Actors: "+shownActors+" Movie id: "+movie_id);
+            //console.log("Directors: "+shownDirectors+" Actors: "+shownActors+" Movie id: "+movie_id);
             printActors(json.credits.cast[i]);
             shownActors++;
         }
     }
     for(let i=0; i<json.credits.crew.length; i++){
         if(json.credits.crew[i].known_for_department == "Directing" &&  shownDirectors < 5){
-            console.log("Directors: "+shownDirectors+" Actors: "+shownActors+" Movie id: "+movie_id);
+            //console.log("Directors: "+shownDirectors+" Actors: "+shownActors+" Movie id: "+movie_id);
             printActors(json.credits.crew[i]);
             shownDirectors++;
         }
         if(json.credits.crew[i].known_for_department == "Acting" && shownActors < 5){
-            console.log("Directors: "+shownDirectors+" Actors: "+shownActors+" Movie id: "+movie_id);
+            //console.log("Directors: "+shownDirectors+" Actors: "+shownActors+" Movie id: "+movie_id);
             printActors(json.credits.crew[i]);
             shownActors++;
         }
@@ -257,6 +270,78 @@ const printActors = (json_actor) =>{
         actorImage.src = 'src/images/unknown.png'; 
     }
     appendToHtml('#' + 'actors_' + movie_id, actorImage)
+}
+
+const printRanking = (nomination) =>{
+    makeTable(nomination);
+    switch (nomination){
+        case "Rating":
+            uniqueFetch(url+"/movie/top_rated?"+api_key, printRankingMovieTopRated);
+            break;
+        case "Movie Popularity":
+            uniqueFetch(url+"/movie/popular?"+api_key, printRankingMoviePopular);
+            break;
+        case "Actor Popularity":
+            uniqueFetch(url+"/person/popular?"+api_key, printRankingActorPopular);
+            break;
+        default:
+            console.log("Something not yes ;c");
+    }
+    
+}
+
+const printRankingMovieTopRated = (json) =>{
+    for(let i = 1; i <= 5; i++){
+        makeRow("rankingRating"+i, i, json.results[i-1].title, json.results[i-1].vote_average + "("+json.results[i-1].vote_count+" votes)", "rankingRating");
+    }
+}
+
+const printRankingMoviePopular = (json) =>{
+    for(let i = 1; i <= 5; i++){
+        makeRow("rankingMoviePopularity"+i, i, json.results[i-1].title, json.results[i-1].popularity, "rankingMoviePopularity");
+    }
+}
+
+const printRankingActorPopular = (json) =>{
+    for(let i = 1; i <= 5; i++){
+        makeRow("rankingActorPopularity"+i, i, json.results[i-1].name, json.results[i-1].popularity, "rankingActorPopularity");
+    }
+}
+
+const makeRow = (trId, td1Content, td2Content, td3Content, tableId) =>{
+    let tr = document.createElement('tr');
+    let td1 = document.createElement('td');
+    let td2 = document.createElement('td');
+    let td3 = document.createElement('td');
+    tr.id = trId;
+    td1.textContent = td1Content;
+    td2.textContent = td2Content;
+    td3.textContent = td3Content;
+    appendToHtml('table#'+tableId, tr);
+    appendToHtml('tr#'+trId, td1);
+    appendToHtml('tr#'+trId, td2);
+    appendToHtml('tr#'+trId, td3);
+}
+
+const makeTable = (nomination) =>{
+    let table = document.createElement('table');
+    let tr = document.createElement('tr');
+    let th1 = document.createElement('th');
+    let th2 = document.createElement('th');
+    let th3 = document.createElement('th');
+    th1.textContent = "Place";
+    th2.textContent = "Movie";
+    if(nomination == "Actor Popularity")
+        th2.textContent = "Actor";
+    th3.textContent = nomination;
+    nomination = nomination.replace(/ /g, '');
+    table.id = "ranking"+nomination;
+    tr.id = "ranking"+nomination;
+    appendToHtml('div#ranking', table);
+    appendToHtml('table#'+table.id, tr);
+    appendToHtml('tr#'+tr.id, th1);
+    appendToHtml('tr#'+tr.id, th2);
+    appendToHtml('tr#'+tr.id, th3);
 }
 
 const printFancyMovie = (json) => {
