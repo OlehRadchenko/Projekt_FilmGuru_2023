@@ -18,12 +18,11 @@ const startProgram = (print, word, page) => {
 };
 
 const mostPopular = () => {
-    page = 1;
     navigationButtonsShows = true;
     checkAndClearMainDiv();
     createMainDiv(true);
     createNavigationButtonDiv();
-    uniqueFetch(url + '/movie/popular?' + api_key + '&page=' + page, printFancyMovie);
+    uniqueFetch(url + '/movie/popular?' + api_key + '&page=' + actualPage, printFancyMovie);
     printAllRankings();
 };
 
@@ -37,6 +36,7 @@ const buttonClick = (word, page) => {
     checkAndClearMainDiv();
     createMainDiv(true);
     createNavigationButtonDiv();
+    clearNavButtons();
     keyword = word;
     uniqueFetch(url + '/search/movie?query=' + keyword + '&' + api_key + '&page=' + page, printFancyMovie);
     printAllRankings();
@@ -70,7 +70,11 @@ const buttonGenre = (genr) => {
         checkAndClearMainDiv();
         createMainDiv(true);
         printAllRankings();
-        uniqueFetch(url + '/search/movie?query=' + keyword + '&' + api_key + '&page=' + actualPage, filtrGenre);
+        if(keyword != undefined){
+            uniqueFetch(url + '/search/movie?query=' + keyword + '&' + api_key + '&page=' + actualPage, filtrGenre);
+        }else{
+            uniqueFetch(url + '/movie/popular?' + api_key + '&page=' + actualPage, filtrGenre);
+        }
     }
 };
 
@@ -449,14 +453,14 @@ const checkAndClearMainDiv = () => {
 };
 
 const createMainDiv = (ranking) => {
-    let mainDiv = document.createElement('div');
-    mainDiv.id = 'mainDiv';
-    appendToHtml('main', mainDiv);
     if (ranking) {
         let rankingDiv = document.createElement('div');
         rankingDiv.id = 'ranking';
-        appendToHtml('div#mainDiv', rankingDiv);
+        appendToHtml('div#content', rankingDiv);
     }
+    let mainDiv = document.createElement('div');
+    mainDiv.id = 'mainDiv';
+    appendToHtml('div#content', mainDiv);
 };
 
 const createNavigationButtonDiv = () => {
@@ -471,8 +475,8 @@ const clearNavButtons = () => {
     if (document.getElementById('nextPageButton') != null) {
         document.getElementById('previousPageButton').remove();
         document.getElementById('nextPageButton').remove();
-        navigationButtonsShows = false;
     }
+    navigationButtonsShows = false;
 };
 
 const printOnConsole = (json) => {
@@ -587,19 +591,25 @@ const showMovie = () => {
     for (i = 0; i < localStorage.length; i++) {
         let shownMovie = window.localStorage.getItem("newMovie" + (i));
         let shownMovie2 = JSON.parse(shownMovie);
+        let movieDiv = document.createElement('div');
+        movieDiv.id = "movie"+i;
+        mainDiv.appendChild(movieDiv);
         let title = document.createElement('h1');
         title.textContent = 'Title: ' + shownMovie2.title;
-        mainDiv.appendChild(title);
+        movieDiv.title = shownMovie2.title;
+        movieDiv.appendChild(title);
         let rok_w = document.createElement('h2');
         rok_w.textContent = 'Release date: ' + shownMovie2.rok_w;
-        mainDiv.appendChild(rok_w);
+        movieDiv.year = shownMovie2.rok_w;
+        movieDiv.appendChild(rok_w);
         let overview = document.createElement('h2');
         overview.textContent = 'Overview: ' + shownMovie2.overview;
-        mainDiv.appendChild(overview);
+        movieDiv.appendChild(overview);
         let genre = document.createElement('h2');
         genre.textContent = 'Genres: ' + shownMovie2.genres;
-        mainDiv.appendChild(genre);
-        createBr();
+        movieDiv.appendChild(genre);
+        let br = document.createElement('br');
+        movieDiv.appendChild(br);
 
         console.log(shownMovie2);
     }
