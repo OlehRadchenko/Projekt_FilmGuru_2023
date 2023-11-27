@@ -1,24 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Film Guru</title>
-    <script src="scripts/script.js"></script>
     <link rel="stylesheet" href="styles/style.css">
+    <script src="scripts/script.js" defer></script>
+    <script src="styles/style.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+        integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
-<body>
-    <form>
-        <input type="text" name="keyword" value="batman">
-        <input type="text" name="genre" value="Action">
-        <input type="button" value="Wyświetl filmy" onclick="buttonClick(keyword.value, 1)">
-        <input type="button" value="sortuj alfabetycznie" onclick="sort('Alfa')">
-        <input type="button" value="sortuj po roku" onclick="sort('Year')">
-        <input type="button" value="sortuj po ratingu" onclick="sort('Rating')">
-        <input type="button" value="Filtr genre" onclick="buttonGenre(genre.value)">
-        <input type="button" value="dodaj własny film!" onclick="addMovie()">
-        <input type="button" value="twoje filmy" onclick="showMovie()">
-        <input type="button" value="usuń wszystkie swoje filmy" onclick="delMovies()">
-    </form>
-    <div id="navigationButtons"></div>
+
+<body onload="mostPopular()">
+    <header>
+        <nav>
+            <div>
+                <h1 class="title">film guru</h1>
+            </div>
+            <div class="second">
+                <form>
+                    <div class="field">
+                        <div class="input__Field">
+                            <input type="text" name="keyword" class="input" placeholder="Wpisz coś">
+                        </div>
+                        <div class="hr"></div>
+                        <div class="genre">
+                            <div class="dropdown">
+                                <input class="val" name="val" type="text" placeholder="Select" readonly>
+                                <div class="options">
+                                    <div onclick="show('Title')">Title</div>
+                                    <div onclick="show('Genre')">Genre</div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="search" type="button" onclick="startProgram(val.value, keyword.value, 1)">
+                            <i class="fa-solid fa-magnifying-glass" style="color:#fff; "></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div id="navigationButtons"></div>
+            <input type="button" value="Sort alphabetically" onclick="sort('Alfa')">
+            <input type="button" value="Sort by date" onclick="sort('Year')">
+            <input type="button" value="Sort by rating" onclick="sort('Rating')">
+            <input type="button" value="Add your own movie!" onclick="addMovie()">
+            <input type="button" value="Your movies" onclick="showMovie()">
+            <input type="button" value="Delete all your movies" onclick="delMovies()">
+        </nav>
+    </header>
+    <main>
+    </main>
 </body>
+
 </html>

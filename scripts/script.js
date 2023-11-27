@@ -1,51 +1,76 @@
 const url = 'https://api.themoviedb.org/3';
 const api_key = 'api_key=c55b1cd24cb5bed30d81132775cd9903';
-let movie_id, maxPages, keyword, shownActors, shownDirectors, genre, shownTrailers; //savedSelector;
+let movie_id, maxPages, keyword, shownActors, shownDirectors, genre;
 let id_backdrops = 0;
 let id_trailers = 0;
-let alreadySearched = 0;
 let actualPage = 1;
 let navigationButtonsShows = false;
 let sortedByAlfa = 0;
 let sortedByYear = 0;
 let sortedByRating = 0;
 
-const buttonClick = (word, page) => {
+const startProgram = (print, word, page) => {
+    if (print == "Title") {
+        buttonClick(word, page);
+    } else if (print == "Genre") {
+        buttonGenre(word);
+    }
+};
+
+const mostPopular = () => {
+    page = 1;
+    navigationButtonsShows = true;
     checkAndClearMainDiv();
     createMainDiv(true);
-    keyword = word;
-    uniqueFetch(url + '/search/movie?query=' + keyword + '&' + api_key + '&page=' + page, printFancyMovie);
+    createNavigationButtonDiv();
+    uniqueFetch(url + '/movie/popular?' + api_key + '&page=' + page, printFancyMovie);
+    printAllRankings();
+};
+
+const printAllRankings = () => {
     printRanking("Rating");
     printRanking("Movie Popularity");
     printRanking("Actor Popularity");
 };
 
+const buttonClick = (word, page) => {
+    checkAndClearMainDiv();
+    createMainDiv(true);
+    createNavigationButtonDiv();
+    keyword = word;
+    uniqueFetch(url + '/search/movie?query=' + keyword + '&' + api_key + '&page=' + page, printFancyMovie);
+    printAllRankings();
+};
+
 const sort = (by) => {
-    let toSort = Array.prototype.slice.call(document.getElementById('mainDiv').children);
-    let sorted;
-    if(by == "Alfa"){
-        sorted = toSort.sort((a, b) => (sortedByAlfa % 2 == 0) ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title));
-        sortedByAlfa++;
-    }else if(by == "Year"){
-        sorted = toSort.sort((a, b) => (sortedByYear % 2 == 0) ? new Date(a.year) - new Date(b.year) : new Date(b.year) - new Date(a.year));
-        sortedByYear++;
-    }else if(by == "Rating"){
-        sorted = toSort.sort((a, b) => (sortedByRating % 2 == 0) ? b.rating - a.rating : a.rating - b.rating);
-        sortedByRating++;
-    }
-    var parent = document.getElementById('mainDiv');
-    parent.innerHTML = "";
-    for (var i = 0, l = toSort.length; i < l; i++) {
-        parent.appendChild(sorted[i]);
+    if (document.getElementById('mainDiv') != null) {
+        let toSort = Array.prototype.slice.call(document.getElementById('mainDiv').children);
+        let sorted;
+        if (by == "Alfa") {
+            sorted = toSort.sort((a, b) => (sortedByAlfa % 2 == 0) ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title));
+            sortedByAlfa++;
+        } else if (by == "Year") {
+            sorted = toSort.sort((a, b) => (sortedByYear % 2 == 0) ? new Date(a.year) - new Date(b.year) : new Date(b.year) - new Date(a.year));
+            sortedByYear++;
+        } else if (by == "Rating") {
+            sorted = toSort.sort((a, b) => (sortedByRating % 2 == 0) ? b.rating - a.rating : a.rating - b.rating);
+            sortedByRating++;
+        }
+        var parent = document.getElementById('mainDiv');
+        parent.innerHTML = "";
+        for (var i = 0, l = toSort.length; i < l; i++) {
+            parent.appendChild(sorted[i]);
+        }
     }
 };
 
 const buttonGenre = (genr) => {
-    if(document.getElementById('mainDiv') != null){
-    setGenre(genr);
-    checkAndClearMainDiv();
-    createMainDiv(true);
-    uniqueFetch(url + '/search/movie?query=' + keyword + '&' + api_key + '&page=' + actualPage, filtrGenre);
+    if (document.getElementById('mainDiv') != null) {
+        setGenre(genr);
+        checkAndClearMainDiv();
+        createMainDiv(true);
+        printAllRankings();
+        uniqueFetch(url + '/search/movie?query=' + keyword + '&' + api_key + '&page=' + actualPage, filtrGenre);
     }
 };
 
@@ -78,52 +103,61 @@ const printMovie = (json) => {
 
     movie_id = json.id;
     movieDiv.id = 'movieDiv' + movie_id;
-    
+
     movieDiv.title = json.title;
     movieDiv.year = json.release_date;
     movieDiv.rating = json.vote_average;
 
     themoviedb_link.href = 'https://www.themoviedb.org/movie/' + movie_id;
     themoviedb_link.textContent = 'Open on themoviedb';
+    themoviedb_link.target = "_blank";
 
     appendToHtml("div#mainDiv", movieDiv);
-    createAndPrintSmth('h1', 'Title: ', json.title, 'div#movieDiv');
     printPoster(json.poster_path);
-    createAndPrintSmth('h2', 'Release date: ', json.release_date, 'div#movieDiv');
+    createDivsWithIdAndClass('div', 'info' + movie_id, 'info', 'div#movieDiv');
+    createDivsWithIdAndClass('div', 'movie' + movie_id, 'movie', 'div#info');
+    createAndPrintSmth('h2', '', json.title, 'div#movie');
+    createAndPrintSmth('h3', '', json.release_date, 'div#movie');
+    if (json.credits.cast.length > 0 || json.credits.crew.length > 0) {
+        createAndPrintSmthWithID('div', 'actors_', movie_id, 'div#movie', searchActorsDirectors, json);
+    }
     createMoreInfo();
-    createAndPrintSmth('h2', 'Overview: ', json.overview, 'div#more_');
-    printGenres(json.genres);
-    appendToHtml("div#more_" + movie_id, themoviedb_link);
-    createAndPrintSmth('h3', 'Average vote:  ', json.vote_average, 'div#more_');
-    createAndPrintSmth('h3', 'Count vote: ', json.vote_count, 'div#more_');
+    createAndPrintSmth('h2', 'Storyline', '', 'div#more')
+    createAndPrintSmth('p', '', json.overview, 'div#more');
 
     if (json.images.backdrops.length > 0) {
-        createAndPrintSmthWithID('div', 'backdrops_', id_backdrops, 'div#more_', printBackdrops, json.images.backdrops);
+        createAndPrintSmth('h2', 'Backdrops/Posters', '', 'div#more')
+        createAndPrintSmthWithID('div', 'backdrops_', id_backdrops, 'div#more', printBackdrops, json.images.backdrops);
     }
+
+    printGenres(json.genres);
+    appendToHtml("div#more" + movie_id, themoviedb_link);
+    createAndPrintSmth('h3', 'Average vote:  ', json.vote_average, 'div#more');
+    createAndPrintSmth('h3', 'Count vote: ', json.vote_count, 'div#more');
+
+
 
     if (json.videos.results.length > 0) {
-        createAndPrintSmthWithID('div', 'trailers_', id_trailers, 'div#more_', printTrailers, json.videos.results);
+        createAndPrintSmthWithID('div', 'trailers_', id_trailers, 'div#more', printTrailers, json.videos.results);
     }
 
-    if(json.credits.cast.length > 0 || json.credits.crew.length > 0){
-        createAndPrintSmthWithID('div', 'actors_', movie_id, 'div#more_', searchActorsDirectors, json);
-    }
-
+    var br = document.createElement('br');
+    appendToHtml("div#info" + movie_id, br);
     var rate = document.createElement('input');
     rate.id = 'rate' + movie_id;
     rate.value = 0;
     rate.setAttribute('type', 'number');
     let rate2 = movie_id;
-    appendToHtml("div#movieDiv" + movie_id, rate);
+    appendToHtml("div#info" + movie_id, rate);
     let rating = document.createElement("BUTTON");
-    rating.innerHTML = "oceń film";
+    rating.innerHTML = "Rate the movie";
     rating.onclick = function () {
         let ratingButton = document.getElementById('rate' + rate2);
         if (ratingButton.value > 10 || ratingButton.value <= 0 || ratingButton.value.length == 0) {
-            alert('ocena musi byc miedzy 0 a 10')
+            alert('Rating must be between 0 and 10')
         }
         else {
-            if (ratingButton.value % 0.5 != 0) { alert('ocena musi byc podzielna przez 0.5') }
+            if (ratingButton.value % 0.5 != 0) { alert('Rating must be divisible by 0.5') }
             else {
                 const options = {
                     method: 'POST',
@@ -139,61 +173,61 @@ const printMovie = (json) => {
                     .then(response => response.json())
                     .then(response => console.log(response))
                     .catch(err => console.error(err));
-                alert('ocena ' + ratingButton.value + ' wystawiona!')
+                alert('Rating ' + ratingButton.value + ' given!')
             }
         }
     };
-    appendToHtml("div#movieDiv" + movie_id, rating);
-
+    appendToHtml("div#info" + movie_id, rating);
     //printOnConsole(json);
 };
 
 const printPoster = (posterData) => {
+    let posterDiv = document.createElement('div');
+    posterDiv.id = "poster" + movie_id;
+    posterDiv.className = "image";
+    appendToHtml("div#movieDiv" + movie_id, posterDiv)
     let poster = document.createElement('img');
-    poster.style.width = '100px';
-    poster.style.height = '100px';
     if (posterData != null) {
         poster.src = 'https://image.tmdb.org/t/p/w500' + posterData;
-    }else{
+    } else {
         poster.src = 'src/images/unknown_movie.png';
     }
-    appendToHtml("div#movieDiv" + movie_id, poster);
+    appendToHtml("div#poster" + movie_id, poster);
 };
 
 const printTrailers = (trailersData) => {
     shownTrailers = 0;
     for (let i = 0; i < trailersData.length; i++) {
-        if(shownTrailers < 3){
-            let trailer = document.createElement('a');
-            let br = document.createElement('br');
-            trailer.textContent = ' Open: ' + trailersData[i].name;
-            trailer.href = 'https://www.youtube.com/watch?v=' + trailersData[i].key;
-            appendToHtml('#trailers_' + id_trailers, trailer);
-            appendToHtml('#trailers_' + id_trailers, br);
-            shownTrailers++;
-        }
+        let trailer = document.createElement('a');
+        let br = document.createElement('br');
+        trailer.textContent = ' Open: ' + trailersData[i].name;
+        trailer.target = "_blank";
+        trailer.href = 'https://www.youtube.com/watch?v=' + trailersData[i].key;
+        appendToHtml('#trailers_' + id_trailers, trailer);
+        appendToHtml('#trailers_' + id_trailers, br);
+        shownTrailers++;
     }
     id_trailers++;
 };
 
 const printBackdrops = (backdropsData) => {
-
     for (let i = 0; i < backdropsData.length; i++) {
         let backdrop = document.createElement('img');
         backdrop.src = 'https://image.tmdb.org/t/p/w500' + backdropsData[i].file_path;
         backdrop.alt = 'Backdrop ' + i;
-        backdrop.width = 200;
-        backdrop.height = 200;
-        appendToHtml('#backdrops_' + id_backdrops, backdrop);
+        backdrop.width = 100;
+        backdrop.height = 56;
+        appendToHtml('#more' + movie_id, backdrop);
     }
-    id_backdrops++;
 };
 
 const printGenres = (genresData) => {
-    let genre = document.createElement('h2');
-    appendToHtml("div#more_" + movie_id, genre);
+    let genre = document.createElement('p');
+    let genreH2 = document.createElement('h2');
+    appendToHtml("div#more" + movie_id, genreH2);
+    appendToHtml("div#more" + movie_id, genre);
     if (genresData.length > 0) {
-        genre.innerHTML += "Genres: <br>";
+        genreH2.innerHTML = "Genres";
         for (let i = 0; i < genresData.length; i++) {
             genre.innerHTML += '- ' + genresData[i].name + '<br>';
         }
@@ -203,18 +237,25 @@ const printGenres = (genresData) => {
 const createMoreInfo = () => {
     let moreInfoDiv = document.createElement('div');
     let showMoreInfo = document.createElement('button');
-    moreInfoDiv.id = "more_" + movie_id;
+    moreInfoDiv.id = "more" + movie_id;
     moreInfoDiv.style.display = "none";
     showMoreInfo.innerHTML = "Show more info";
     showMoreInfo.id = "showMoreInfoButton_" + movie_id;
     setMoreInfoOnClick(showMoreInfo, movie_id);
-    appendToHtml("div#movieDiv" + movie_id, showMoreInfo);
-    appendToHtml("div#movieDiv" + movie_id, moreInfoDiv);
+    appendToHtml("div#info" + movie_id, showMoreInfo);
+    appendToHtml("div#info" + movie_id, moreInfoDiv);
 };
 
 const createAndPrintSmth = (element, text, value, parentId) => {
     let smth = document.createElement(element);
     smth.textContent = text + value;
+    appendToHtml(parentId + movie_id, smth);
+};
+
+const createDivsWithIdAndClass = (element, id, clas, parentId) => {
+    let smth = document.createElement(element);
+    smth.id = id;
+    smth.className = clas;
     appendToHtml(parentId + movie_id, smth);
 };
 
@@ -228,12 +269,12 @@ const createAndPrintSmthWithID = (element, idText, idValue, parentId, funct, arg
 const searchActorsDirectors = (json) => {
     shownActors = 0;
     shownDirectors = 0;
-    for(let i=0; i<json.credits.cast.length; i++){
-        if(json.credits.cast[i].known_for_department == "Directing" &&  shownDirectors < 5){
+    for (let i = 0; i < json.credits.cast.length; i++) {
+        if (json.credits.cast[i].known_for_department == "Directing" && shownDirectors < 5) {
             printActors(json.credits.cast[i]);
             shownDirectors++;
         }
-        if(json.credits.cast[i].known_for_department == "Acting" && shownActors < 5){
+        if (json.credits.cast[i].known_for_department == "Acting" && shownActors < 5) {
             printActors(json.credits.cast[i]);
             shownActors++;
         }
@@ -248,32 +289,32 @@ const searchActorsDirectors = (json) => {
 
 const printActors = (json_actor) => {
     let actorImage = document.createElement('img');
-    actorImage.width = 50;
+    actorImage.width = 66;
     actorImage.height = 100;
     if (json_actor.known_for_department == "Acting") {
         actorImage.alt = 'name: ' + json_actor.name + '\trole: Actor';
     } else {
         actorImage.alt = 'name: ' + json_actor.name + '\trole: Director';
     }
-    if(json_actor.profile_path != null){
-        actorImage.src = 'https://image.tmdb.org/t/p/w500' + json_actor.profile_path; 
-    }else{
-        actorImage.src = 'src/images/unknown.png'; 
+    if (json_actor.profile_path != null) {
+        actorImage.src = 'https://image.tmdb.org/t/p/w500' + json_actor.profile_path;
+    } else {
+        actorImage.src = 'src/images/unknown.png';
     }
-    appendToHtml('#' + 'actors_' + movie_id, actorImage)
+    appendToHtml('#actors_' + movie_id, actorImage)
 };
 
 const printRanking = (nomination) => {
     makeTable(nomination);
-    switch (nomination){
+    switch (nomination) {
         case "Rating":
-            uniqueFetch(url+"/movie/top_rated?"+api_key, printRankingMovieTopRated);
+            uniqueFetch(url + "/movie/top_rated?" + api_key, printRankingMovieTopRated);
             break;
         case "Movie Popularity":
-            uniqueFetch(url+"/movie/popular?"+api_key, printRankingMoviePopular);
+            uniqueFetch(url + "/movie/popular?" + api_key, printRankingMoviePopular);
             break;
         case "Actor Popularity":
-            uniqueFetch(url+"/person/popular?"+api_key, printRankingActorPopular);
+            uniqueFetch(url + "/person/popular?" + api_key, printRankingActorPopular);
             break;
         default:
             console.log("Something not yes ;c");
@@ -281,20 +322,20 @@ const printRanking = (nomination) => {
 };
 
 const printRankingMovieTopRated = (json) => {
-    for(let i = 1; i <= 5; i++){
-        makeRow("rankingRating"+i, i, json.results[i-1].title, json.results[i-1].vote_average + "("+json.results[i-1].vote_count+" votes)", "rankingRating", 'td', 'https://www.themoviedb.org/movie/' + json.results[i-1].id);
+    for (let i = 1; i <= 5; i++) {
+        makeRow("rankingRating" + i, i, json.results[i - 1].title, json.results[i - 1].vote_average + "(" + json.results[i - 1].vote_count + " votes)", "rankingRating", 'td', 'https://www.themoviedb.org/movie/' + json.results[i - 1].id);
     }
 };
 
 const printRankingMoviePopular = (json) => {
-    for(let i = 1; i <= 5; i++){
-        makeRow("rankingMoviePopularity"+i, i, json.results[i-1].title, json.results[i-1].popularity, "rankingMoviePopularity", 'td', 'https://www.themoviedb.org/movie/' + json.results[i-1].id);
+    for (let i = 1; i <= 5; i++) {
+        makeRow("rankingMoviePopularity" + i, i, json.results[i - 1].title, json.results[i - 1].popularity, "rankingMoviePopularity", 'td', 'https://www.themoviedb.org/movie/' + json.results[i - 1].id);
     }
 };
 
 const printRankingActorPopular = (json) => {
-    for(let i = 1; i <= 5; i++){
-        makeRow("rankingActorPopularity"+i, i, json.results[i-1].name, json.results[i-1].popularity, "rankingActorPopularity", 'td', 'https://www.themoviedb.org/person/' + json.results[i-1].id);
+    for (let i = 1; i <= 5; i++) {
+        makeRow("rankingActorPopularity" + i, i, json.results[i - 1].name, json.results[i - 1].popularity, "rankingActorPopularity", 'td', 'https://www.themoviedb.org/person/' + json.results[i - 1].id);
     }
 };
 
@@ -308,29 +349,31 @@ const makeRow = (trId, td1Content, td2Content, td3Content, tableId, elements, li
     td1.textContent = td1Content;
     td2.textContent = td2Content;
     td3.textContent = td3Content;
-    appendToHtml('table#'+tableId, tr);
-    appendToHtml('tr#'+trId, td1);
-    appendToHtml('tr#'+trId, td2);
-    appendToHtml('tr#'+trId, td3);
-    if(link != null){
+    appendToHtml('table#' + tableId, tr);
+    appendToHtml('tr#' + trId, td1);
+    appendToHtml('tr#' + trId, td2);
+    appendToHtml('tr#' + trId, td3);
+    if (link != null) {
         td2.innerHTML = "";
         let themoviedbLink = document.createElement('a');
         themoviedbLink.textContent = td2Content;
         themoviedbLink.href = link;
+        themoviedbLink.style.textDecoration = 'none';
+        themoviedbLink.style.color = 'black';
         themoviedbLink.target = '_blank';
-        appendToHtml('td#'+trId, themoviedbLink)
+        appendToHtml('td#' + trId, themoviedbLink)
     }
 };
 
 const makeTable = (nomination) => {
     let table = document.createElement('table');
     let nominationWithoutSpaces = nomination.replace(/ /g, '');
-    table.id = "ranking"+nominationWithoutSpaces;
+    table.id = "ranking" + nominationWithoutSpaces;
     appendToHtml('div#ranking', table);
-    if(nomination == "Actor Popularity"){
-        makeRow("ranking"+nominationWithoutSpaces, "Place", "Movie", nomination, table.id, 'th', null);
-    }else{
-        makeRow("ranking"+nominationWithoutSpaces, "Place", "Actor", nomination, table.id, 'th', null);
+    if (nomination == "Actor Popularity") {
+        makeRow("ranking" + nominationWithoutSpaces, "Place", "Movie", nomination, table.id, 'th', null);
+    } else {
+        makeRow("ranking" + nominationWithoutSpaces, "Place", "Actor", nomination, table.id, 'th', null);
     }
 };
 
@@ -384,7 +427,7 @@ const printPreviousPage = () => {
 
 const setMoreInfoOnClick = (button, movieId) => {
     button.onclick = () => {
-        let moreDiv = document.getElementById('more_' + movieId);
+        let moreDiv = document.getElementById('more' + movieId);
         let moreInfoButton = document.getElementById("showMoreInfoButton_" + movieId);
         if (moreDiv.style.display == "block") {
             moreDiv.style.display = "none";
@@ -397,10 +440,10 @@ const setMoreInfoOnClick = (button, movieId) => {
 };
 
 const checkAndClearMainDiv = () => {
-    if(document.getElementById('mainDiv') != null){
+    if (document.getElementById('mainDiv') != null) {
         document.getElementById('mainDiv').remove();
     }
-    if(document.getElementById('ranking') != null){
+    if (document.getElementById('ranking') != null) {
         document.getElementById('ranking').remove();
     }
 };
@@ -408,21 +451,29 @@ const checkAndClearMainDiv = () => {
 const createMainDiv = (ranking) => {
     let mainDiv = document.createElement('div');
     mainDiv.id = 'mainDiv';
-    appendToHtml('body', mainDiv);
-    if(ranking){
+    appendToHtml('main', mainDiv);
+    if (ranking) {
         let rankingDiv = document.createElement('div');
         rankingDiv.id = 'ranking';
-        appendToHtml('body', rankingDiv);
+        appendToHtml('div#mainDiv', rankingDiv);
+    }
+};
+
+const createNavigationButtonDiv = () => {
+    if (document.getElementById('navigationButtons') == null) {
+        let navigationButtonsDiv = document.createElement('div');
+        navigationButtonsDiv.id = "navigationButtons";
+        appendToHtml("div#mainDiv", navigationButtonsDiv);
     }
 };
 
 const clearNavButtons = () => {
-    if(document.getElementById('nextPageButton') != null){
+    if (document.getElementById('nextPageButton') != null) {
         document.getElementById('previousPageButton').remove();
         document.getElementById('nextPageButton').remove();
         navigationButtonsShows = false;
     }
-}
+};
 
 const printOnConsole = (json) => {
     console.log(json);
@@ -493,21 +544,21 @@ const addMovie = () => {
         let newTitle = document.getElementById('title').value;
         let newRok_w = document.getElementById('rok_w').value;
         let newOverview = document.getElementById('overview').value;
-        if(document.getElementById('title').value.replace(/ /g, '') == ""){
+        if (document.getElementById('title').value.replace(/ /g, '') == "") {
             newTitle = 'unknown';
         }
-        if(document.getElementById('rok_w').value.replace(/ /g, '') == ""){
+        if (document.getElementById('rok_w').value.replace(/ /g, '') == "") {
             newRok_w = 'unknown';
         }
-        if(document.getElementById('overview').value.replace(/ /g, '') == ""){
+        if (document.getElementById('overview').value.replace(/ /g, '') == "") {
             newOverview = 'unknown';
         }
         let newGenres = new Array();
         let minus = 0;
         for (i = 0; i <= genreCount; i++) {
-            if(document.getElementById('genre' + i).value.replace(/ /g, '') != ""){
-                newGenres[i-minus] = document.getElementById('genre' + i).value;
-            }else{
+            if (document.getElementById('genre' + i).value.replace(/ /g, '') != "") {
+                newGenres[i - minus] = document.getElementById('genre' + i).value;
+            } else {
                 minus++;
             }
         }
@@ -540,25 +591,26 @@ const showMovie = () => {
         title.textContent = 'Title: ' + shownMovie2.title;
         mainDiv.appendChild(title);
         let rok_w = document.createElement('h2');
-        rok_w.textContent = 'rok wydania: ' + shownMovie2.rok_w;
+        rok_w.textContent = 'Release date: ' + shownMovie2.rok_w;
         mainDiv.appendChild(rok_w);
         let overview = document.createElement('h2');
-        overview.textContent = 'overview: ' + shownMovie2.overview;
+        overview.textContent = 'Overview: ' + shownMovie2.overview;
         mainDiv.appendChild(overview);
         let genre = document.createElement('h2');
-        genre.textContent = 'genres: ' + shownMovie2.genres;
+        genre.textContent = 'Genres: ' + shownMovie2.genres;
         mainDiv.appendChild(genre);
+        createBr();
 
         console.log(shownMovie2);
     }
 };
 
-const delMovies = () => { 
-    localStorage.clear(); 
+const delMovies = () => {
+    localStorage.clear();
 };
 
 const setGenre = (g) => {
-    switch(g){
+    switch (g) {
         case "Action":
             genre = 28;
             break;
