@@ -1,22 +1,22 @@
-"use strict";
 const url = 'https://api.themoviedb.org/3';
 const api_key = 'api_key=c55b1cd24cb5bed30d81132775cd9903';
-let movie_id, maxPages, keyword, shownActors, shownDirectors, genre;
-let id_backdrops = 0;
-let id_trailers = 0;
-let actualPage = 1;
-let navigationButtonsShows = false;
-let sortedByAlfa = 0;
-let sortedByYear = 0;
-let sortedByRating = 0;
-const startProgram = (print, word, page) => {
+let movie_id: number, maxPages: number, keyword: string, shownActors: number, shownDirectors: number, genre: number;
+let id_backdrops: number = 0;
+let id_trailers: number = 0;
+let actualPage: number = 1;
+let navigationButtonsShows: boolean = false;
+let sortedByAlfa: number = 0;
+let sortedByYear: number = 0;
+let sortedByRating: number = 0;
+
+const startProgram = (print: string, word: string, page: number) => {
     if (print == "Title") {
         buttonClick(word, page);
-    }
-    else if (print == "Genre") {
+    } else if (print == "Genre") {
         buttonGenre(word);
     }
 };
+
 const mostPopular = () => {
     navigationButtonsShows = true;
     checkAndClearMainDiv();
@@ -25,12 +25,14 @@ const mostPopular = () => {
     uniqueFetch(url + '/movie/popular?' + api_key + '&page=' + actualPage, printFancyMovie);
     printAllRankings();
 };
+
 const printAllRankings = () => {
     printRanking("Rating");
     printRanking("Movie Popularity");
     printRanking("Actor Popularity");
 };
-const buttonClick = (word, page) => {
+
+const buttonClick = (word: string, page: number) => {
     checkAndClearMainDiv();
     createMainDiv(true);
     createNavigationButtonDiv();
@@ -39,19 +41,18 @@ const buttonClick = (word, page) => {
     uniqueFetch(url + '/search/movie?query=' + keyword + '&' + api_key + '&page=' + page, printFancyMovie);
     printAllRankings();
 };
-const sort = (by) => {
+
+const sort = (by: string) => {
     if (document.getElementById('mainDiv') != null) {
         let toSort = Array.prototype.slice.call(document.getElementById('mainDiv').children);
         let sorted;
         if (by == "Alfa") {
             sorted = toSort.sort((a, b) => (sortedByAlfa % 2 == 0) ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title));
             sortedByAlfa++;
-        }
-        else if (by == "Year") {
+        } else if (by == "Year") {
             sorted = toSort.sort((a, b) => (sortedByYear % 2 == 0) ? new Date(a.year) - new Date(b.year) : new Date(b.year) - new Date(a.year));
             sortedByYear++;
-        }
-        else if (by == "Rating") {
+        } else if (by == "Rating") {
             sorted = toSort.sort((a, b) => (sortedByRating % 2 == 0) ? b.rating - a.rating : a.rating - b.rating);
             sortedByRating++;
         }
@@ -62,20 +63,21 @@ const sort = (by) => {
         }
     }
 };
-const buttonGenre = (genr) => {
+
+const buttonGenre = (genr: string) => {
     if (document.getElementById('mainDiv') != null) {
         setGenre(genr);
         checkAndClearMainDiv();
         createMainDiv(true);
         printAllRankings();
-        if (keyword != undefined) {
+        if(keyword != undefined){
             uniqueFetch(url + '/search/movie?query=' + keyword + '&' + api_key + '&page=' + actualPage, filtrGenre);
-        }
-        else {
+        }else{
             uniqueFetch(url + '/movie/popular?' + api_key + '&page=' + actualPage, filtrGenre);
         }
     }
 };
+
 const filtrGenre = (json) => {
     json.results = json.results.filter(movie => {
         return movie.genre_ids.some(g => g == genre);
@@ -83,31 +85,37 @@ const filtrGenre = (json) => {
     //console.log(json);
     printFancyMovie(json);
 };
-const uniqueFetch = (url, fn) => {
+
+const uniqueFetch = (url: string, fn) => {
     fetch(url)
         .then(checkStatus)
         .then(fn)
         .catch(printError);
 };
+
 const checkStatus = (response) => {
     if (response.status == 200) {
         return response.json();
-    }
-    else {
+    } else {
         throw new Error('Error downloading data');
     }
 };
+
 const printMovie = (json) => {
     let movieDiv = document.createElement('div');
     let themoviedb_link = document.createElement('a');
+
     movie_id = json.id;
     movieDiv.id = 'movieDiv' + movie_id;
+
     movieDiv.title = json.title;
     movieDiv.year = json.release_date;
     movieDiv.rating = json.vote_average;
+
     themoviedb_link.href = 'https://www.themoviedb.org/movie/' + movie_id;
     themoviedb_link.textContent = 'Open on themoviedb';
     themoviedb_link.target = "_blank";
+
     appendToHtml("div#mainDiv", movieDiv);
     printPoster(json.poster_path);
     createDivsWithIdAndClass('div', 'info' + movie_id, 'info', 'div#movieDiv');
@@ -118,19 +126,25 @@ const printMovie = (json) => {
         createAndPrintSmthWithID('div', 'actors_', movie_id, 'div#movie', searchActorsDirectors, json);
     }
     createMoreInfo();
-    createAndPrintSmth('h2', 'Storyline', '', 'div#more');
+    createAndPrintSmth('h2', 'Storyline', '', 'div#more')
     createAndPrintSmth('p', '', json.overview, 'div#more');
+
     if (json.images.backdrops.length > 0) {
-        createAndPrintSmth('h2', 'Backdrops/Posters', '', 'div#more');
+        createAndPrintSmth('h2', 'Backdrops/Posters', '', 'div#more')
         createAndPrintSmthWithID('div', 'backdrops_', id_backdrops, 'div#more', printBackdrops, json.images.backdrops);
     }
+
     printGenres(json.genres);
     appendToHtml("div#more" + movie_id, themoviedb_link);
     createAndPrintSmth('h3', 'Average vote:  ', json.vote_average, 'div#more');
     createAndPrintSmth('h3', 'Count vote: ', json.vote_count, 'div#more');
+
+
+
     if (json.videos.results.length > 0) {
         createAndPrintSmthWithID('div', 'trailers_', id_trailers, 'div#more', printTrailers, json.videos.results);
     }
+
     var br = document.createElement('br');
     appendToHtml("div#info" + movie_id, br);
     var rate = document.createElement('input');
@@ -144,12 +158,10 @@ const printMovie = (json) => {
     rating.onclick = function () {
         let ratingButton = document.getElementById('rate' + rate2);
         if (ratingButton.value > 10 || ratingButton.value <= 0 || ratingButton.value.length == 0) {
-            alert('Rating must be between 0 and 10');
+            alert('Rating must be between 0 and 10')
         }
         else {
-            if (ratingButton.value % 0.5 != 0) {
-                alert('Rating must be divisible by 0.5');
-            }
+            if (ratingButton.value % 0.5 != 0) { alert('Rating must be divisible by 0.5') }
             else {
                 const options = {
                     method: 'POST',
@@ -160,33 +172,35 @@ const printMovie = (json) => {
                     },
                     body: '{"value":' + ratingButton.value + '}'
                 };
+
                 fetch('https://api.themoviedb.org/3/movie/' + movie_id + '/rating', options)
                     .then(response => response.json())
                     .then(response => console.log(response))
                     .catch(err => console.error(err));
-                alert('Rating ' + ratingButton.value + ' given!');
+                alert('Rating ' + ratingButton.value + ' given!')
             }
         }
     };
     appendToHtml("div#info" + movie_id, rating);
     //printOnConsole(json);
 };
+
 const printPoster = (posterData) => {
     let posterDiv = document.createElement('div');
     posterDiv.id = "poster" + movie_id;
     posterDiv.className = "image";
-    appendToHtml("div#movieDiv" + movie_id, posterDiv);
+    appendToHtml("div#movieDiv" + movie_id, posterDiv)
     let poster = document.createElement('img');
     if (posterData != null) {
         poster.src = 'https://image.tmdb.org/t/p/w500' + posterData;
-    }
-    else {
+    } else {
         poster.src = 'src/images/unknown_movie.png';
     }
     appendToHtml("div#poster" + movie_id, poster);
 };
+
 const printTrailers = (trailersData) => {
-    let shownTrailers = 0;
+    let shownTrailers: number = 0;
     for (let i = 0; i < trailersData.length; i++) {
         let trailer = document.createElement('a');
         let br = document.createElement('br');
@@ -199,6 +213,7 @@ const printTrailers = (trailersData) => {
     }
     id_trailers++;
 };
+
 const printBackdrops = (backdropsData) => {
     for (let i = 0; i < backdropsData.length; i++) {
         let backdrop = document.createElement('img');
@@ -209,6 +224,7 @@ const printBackdrops = (backdropsData) => {
         appendToHtml('#more' + movie_id, backdrop);
     }
 };
+
 const printGenres = (genresData) => {
     let genre = document.createElement('p');
     let genreH2 = document.createElement('h2');
@@ -221,6 +237,7 @@ const printGenres = (genresData) => {
         }
     }
 };
+
 const createMoreInfo = () => {
     let moreInfoDiv = document.createElement('div');
     let showMoreInfo = document.createElement('button');
@@ -232,23 +249,27 @@ const createMoreInfo = () => {
     appendToHtml("div#info" + movie_id, showMoreInfo);
     appendToHtml("div#info" + movie_id, moreInfoDiv);
 };
-const createAndPrintSmth = (element, text, value, parentId) => {
+
+const createAndPrintSmth = (element: string, text: string, value: string, parentId: string) => {
     let smth = document.createElement(element);
     smth.textContent = text + value;
     appendToHtml(parentId + movie_id, smth);
 };
-const createDivsWithIdAndClass = (element, id, clas, parentId) => {
+
+const createDivsWithIdAndClass = (element: string, id: string, clas: string, parentId: string) => {
     let smth = document.createElement(element);
     smth.id = id;
     smth.className = clas;
     appendToHtml(parentId + movie_id, smth);
 };
-const createAndPrintSmthWithID = (element, idText, idValue, parentId, funct, argument) => {
+
+const createAndPrintSmthWithID = (element: string, idText: string, idValue: string, parentId: string, funct, argument) => {
     let smth = document.createElement(element);
     smth.id = idText + idValue;
     appendToHtml(parentId + movie_id, smth);
     funct(argument);
 };
+
 const searchActorsDirectors = (json) => {
     shownActors = 0;
     shownDirectors = 0;
@@ -269,25 +290,25 @@ const searchActorsDirectors = (json) => {
         }
     }*/
 };
+
 const printActors = (json_actor) => {
     let actorImage = document.createElement('img');
     actorImage.width = 66;
     actorImage.height = 100;
     if (json_actor.known_for_department == "Acting") {
         actorImage.alt = 'name: ' + json_actor.name + '\trole: Actor';
-    }
-    else {
+    } else {
         actorImage.alt = 'name: ' + json_actor.name + '\trole: Director';
     }
     if (json_actor.profile_path != null) {
         actorImage.src = 'https://image.tmdb.org/t/p/w500' + json_actor.profile_path;
-    }
-    else {
+    } else {
         actorImage.src = 'src/images/unknown.png';
     }
-    appendToHtml('#actors_' + movie_id, actorImage);
+    appendToHtml('#actors_' + movie_id, actorImage)
 };
-const printRanking = (nomination) => {
+
+const printRanking = (nomination: string) => {
     makeTable(nomination);
     switch (nomination) {
         case "Rating":
@@ -303,22 +324,26 @@ const printRanking = (nomination) => {
             console.log("Something not yes ;c");
     }
 };
+
 const printRankingMovieTopRated = (json) => {
     for (let i = 1; i <= 5; i++) {
         makeRow("rankingRating" + i, i, json.results[i - 1].title, json.results[i - 1].vote_average + "(" + json.results[i - 1].vote_count + " votes)", "rankingRating", 'td', 'https://www.themoviedb.org/movie/' + json.results[i - 1].id);
     }
 };
+
 const printRankingMoviePopular = (json) => {
     for (let i = 1; i <= 5; i++) {
         makeRow("rankingMoviePopularity" + i, i, json.results[i - 1].title, json.results[i - 1].popularity, "rankingMoviePopularity", 'td', 'https://www.themoviedb.org/movie/' + json.results[i - 1].id);
     }
 };
+
 const printRankingActorPopular = (json) => {
     for (let i = 1; i <= 5; i++) {
         makeRow("rankingActorPopularity" + i, i, json.results[i - 1].name, json.results[i - 1].popularity, "rankingActorPopularity", 'td', 'https://www.themoviedb.org/person/' + json.results[i - 1].id);
     }
 };
-const makeRow = (trId, td1Content, td2Content, td3Content, tableId, elements, link) => {
+
+const makeRow = (trId: string, td1Content: string, td2Content: string, td3Content: string, tableId: string, elements: string, link) => {
     let tr = document.createElement('tr');
     let td1 = document.createElement(elements);
     let td2 = document.createElement(elements);
@@ -340,21 +365,22 @@ const makeRow = (trId, td1Content, td2Content, td3Content, tableId, elements, li
         themoviedbLink.style.textDecoration = 'none';
         themoviedbLink.style.color = 'black';
         themoviedbLink.target = '_blank';
-        appendToHtml('td#' + trId, themoviedbLink);
+        appendToHtml('td#' + trId, themoviedbLink)
     }
 };
-const makeTable = (nomination) => {
+
+const makeTable = (nomination: string) => {
     let table = document.createElement('table');
     let nominationWithoutSpaces = nomination.replace(/ /g, '');
     table.id = "ranking" + nominationWithoutSpaces;
     appendToHtml('div#ranking', table);
     if (nomination == "Actor Popularity") {
         makeRow("ranking" + nominationWithoutSpaces, "Place", "Movie", nomination, table.id, 'th', null);
-    }
-    else {
+    } else {
         makeRow("ranking" + nominationWithoutSpaces, "Place", "Actor", nomination, table.id, 'th', null);
     }
 };
+
 const printFancyMovie = (json) => {
     maxPages = json.total_pages;
     for (let i = 0; i < json.results.length; i++) {
@@ -369,6 +395,7 @@ const printFancyMovie = (json) => {
         previousPageButton.style.width = "50px";
         previousPageButton.style.height = "25px";
         appendToHtml("div#navigationButtons", previousPageButton);
+
         let nextPageButton = document.createElement('button');
         nextPageButton.onclick = printNextPage;
         nextPageButton.id = 'nextPageButton';
@@ -379,24 +406,29 @@ const printFancyMovie = (json) => {
         navigationButtonsShows = true;
     }
 };
+
 const printError = (error) => {
     console.error('Wystąpił błąd:', error);
 };
+
 const appendToHtml = (selector, element) => {
     document.querySelector(selector).appendChild(element);
 };
+
 const printNextPage = () => {
     if (actualPage < maxPages) {
         actualPage++;
         buttonClick(keyword, actualPage);
     }
 };
+
 const printPreviousPage = () => {
     if (actualPage > 1) {
         actualPage--;
         buttonClick(keyword, actualPage);
     }
 };
+
 const setMoreInfoOnClick = (button, movieId) => {
     button.onclick = () => {
         let moreDiv = document.getElementById('more' + movieId);
@@ -404,13 +436,13 @@ const setMoreInfoOnClick = (button, movieId) => {
         if (moreDiv.style.display == "block") {
             moreDiv.style.display = "none";
             moreInfoButton.innerHTML = "Show more info";
-        }
-        else {
+        } else {
             moreDiv.style.display = "block";
             moreInfoButton.innerHTML = "Hide more info";
         }
-    };
+    }
 };
+
 const checkAndClearMainDiv = () => {
     if (document.getElementById('mainDiv') != null) {
         document.getElementById('mainDiv').remove();
@@ -419,7 +451,8 @@ const checkAndClearMainDiv = () => {
         document.getElementById('ranking').remove();
     }
 };
-const createMainDiv = (ranking) => {
+
+const createMainDiv = (ranking: boolean) => {
     if (ranking) {
         let rankingDiv = document.createElement('div');
         rankingDiv.id = 'ranking';
@@ -429,6 +462,7 @@ const createMainDiv = (ranking) => {
     mainDiv.id = 'mainDiv';
     appendToHtml('div#content', mainDiv);
 };
+
 const createNavigationButtonDiv = () => {
     if (document.getElementById('navigationButtons') == null) {
         let navigationButtonsDiv = document.createElement('div');
@@ -436,6 +470,7 @@ const createNavigationButtonDiv = () => {
         appendToHtml("div#mainDiv", navigationButtonsDiv);
     }
 };
+
 const clearNavButtons = () => {
     if (document.getElementById('nextPageButton') != null) {
         document.getElementById('previousPageButton').remove();
@@ -443,9 +478,11 @@ const clearNavButtons = () => {
     }
     navigationButtonsShows = false;
 };
+
 const printOnConsole = (json) => {
     console.log(json);
-    console.log('Title: ' + json.title + '\n' +
+    console.log(
+        'Title: ' + json.title + '\n' +
         'Poster: href: https://image.tmdb.org/t/p/w500' + json.poster_path + '\n' +
         'Overwiev: ' + json.overview + '\n' +
         'Release date: ' + json.release_date + '\n' +
@@ -453,13 +490,17 @@ const printOnConsole = (json) => {
         'themoviedb link: https://www.themoviedb.org/movie/' + movie_id + '\n' +
         'Vote avg: ' + json.vote_average + '\n' +
         'Vote count: ' + json.vote_count + '\n' +
-        'Backdrops: ' + json.images.backdrops + '\n');
+        'Backdrops: ' + json.images.backdrops + '\n'
+    );
     if (json.videos.results.length > 0) {
         for (let i = 0; i < json.videos.results.length; i++) {
-            console.log(json.videos.results[i].name + ': https://www.youtube.com/watch?v=' + json.videos.results[i].key + '\n');
+            console.log(
+                json.videos.results[i].name + ': https://www.youtube.com/watch?v=' + json.videos.results[i].key + '\n'
+            );
         }
     }
 };
+
 const addMovie = () => {
     checkAndClearMainDiv();
     createMainDiv(false);
@@ -499,7 +540,7 @@ const addMovie = () => {
         genre.id = 'genre' + genreCount;
         genre.placeholder = "Give movie genre";
         genres.appendChild(genre);
-    };
+    }
     mainDiv.appendChild(moreGenre);
     let uploadMovie = document.createElement("BUTTON");
     uploadMovie.innerHTML = "dodaj film";
@@ -521,35 +562,37 @@ const addMovie = () => {
         for (let i = 0; i <= genreCount; i++) {
             if (document.getElementById('genre' + i).value.replace(/ /g, '') != "") {
                 newGenres[i - minus] = document.getElementById('genre' + i).value;
-            }
-            else {
+            } else {
                 minus++;
             }
         }
+
         const newMovie = {
             title: newTitle,
             rok_w: newRok_w,
             overview: newOverview,
             genres: newGenres
-        };
+        }
         console.log(JSON.stringify(newMovie));
-        window.localStorage.setItem("newMovie" + localStorage.length, JSON.stringify(newMovie));
-    };
+        window.localStorage.setItem("newMovie" + localStorage.length, JSON.stringify(newMovie))
+    }
     mainDiv.appendChild(uploadMovie);
 };
+
 const createBr = () => {
     let br = document.createElement('br');
     mainDiv.appendChild(br);
 };
+
 const showMovie = () => {
     checkAndClearMainDiv();
     createMainDiv(false);
     clearNavButtons();
-    for (let i = 0; i < localStorage.length; i++) {
+    for (let i: number = 0; i < localStorage.length; i++) {
         let shownMovie = window.localStorage.getItem("newMovie" + (i));
         let shownMovie2 = JSON.parse(shownMovie);
         let movieDiv = document.createElement('div');
-        movieDiv.id = "movie" + i;
+        movieDiv.id = "movie"+i;
         mainDiv.appendChild(movieDiv);
         let title = document.createElement('h1');
         title.textContent = 'Title: ' + shownMovie2.title;
@@ -567,13 +610,16 @@ const showMovie = () => {
         movieDiv.appendChild(genre);
         let br = document.createElement('br');
         movieDiv.appendChild(br);
+
         console.log(shownMovie2);
     }
 };
+
 const delMovies = () => {
     localStorage.clear();
 };
-const setGenre = (g) => {
+
+const setGenre = (g: string) => {
     switch (g) {
         case "Action":
             genre = 28;
